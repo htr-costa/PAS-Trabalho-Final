@@ -15,6 +15,7 @@ import com.bcopstein.ex4_lancheriaddd_v1.Adaptadores.Apresentacao.Presenters.Car
 import com.bcopstein.ex4_lancheriaddd_v1.Aplicacao.RecuperaListaCardapiosUC;
 import com.bcopstein.ex4_lancheriaddd_v1.Aplicacao.RecuperarCardapioUC;
 import com.bcopstein.ex4_lancheriaddd_v1.Aplicacao.Responses.CardapioResponse;
+import org.springframework.beans.factory.annotation.Value;
 import com.bcopstein.ex4_lancheriaddd_v1.Dominio.Entidades.Produto;
 
 @RestController
@@ -22,6 +23,8 @@ import com.bcopstein.ex4_lancheriaddd_v1.Dominio.Entidades.Produto;
 public class CardapioController {
     private RecuperarCardapioUC recuperaCardapioUC;
     private RecuperaListaCardapiosUC recuperaListaCardapioUC;
+    @Value("${application.currentCardapioId}")
+    private long currentCardapioId;
 
     public CardapioController(RecuperarCardapioUC recuperaCardapioUC,
                               RecuperaListaCardapiosUC recuperaListaCardapioUC) {
@@ -52,5 +55,12 @@ public class CardapioController {
             .map(cabCar -> new CabecalhoCardapioPresenter(cabCar.id(),cabCar.titulo()))
             .toList();
          return lstCardapios;
+    }
+    
+    @GetMapping
+    @CrossOrigin("*")
+    public CardapioPresenter recuperaCardapioAtual() {
+        // retorna o cardápio corrente definido na configuração (application.yaml)
+        return recuperaCardapio(currentCardapioId);
     }
 }

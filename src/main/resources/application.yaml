@@ -22,5 +22,6 @@ logging:
       bcopstein: DEBUG
 application:
   name: ex4-lancheriaddd-v1
+  currentCardapioId: 1
 server:
   port: 8080
