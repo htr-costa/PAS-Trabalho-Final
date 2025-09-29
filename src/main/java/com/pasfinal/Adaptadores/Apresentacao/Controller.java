@@ -9,6 +9,6 @@ public class Controller {
     @GetMapping("")
     @CrossOrigin("*")
     public String welcomeMessage() {
-        return "Bem Vindo a Pizzaria ECA";
+        return "Sistema Tele Pizza 1.0";
     }
 }

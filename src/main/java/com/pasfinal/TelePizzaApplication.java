@@ -6,10 +6,10 @@ import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
 @ComponentScan("com.pasfinal")
-public class Ex4LancheriadddV1Application {
+public class TelePizzaApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(Ex4LancheriadddV1Application.class, args);
+		SpringApplication.run(TelePizzaApplication.class, args);
 	}
 
 }
