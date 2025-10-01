@@ -25,8 +25,6 @@ public class CancelarPedidoControllerTest {
     @Test
     @Order(1)
     void deveCancelarPedidoAprovado() throws Exception {
-        // Pré-condição: pedido 1 está APROVADO no data.sql? Se estiver NOVO precisamos simular mudança.
-        // Para manter simples, vamos aceitar que esteja APROVADO nos dados iniciais. Caso contrário este teste falhará e será necessário ajustar o script.
         mockMvc.perform(post("/pedidos/1/cancelamento"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value("CANCELADO"));
