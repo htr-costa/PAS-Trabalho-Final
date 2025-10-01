@@ -11,14 +11,20 @@ import org.springframework.web.bind.annotation.RestController;
 import com.pasfinal.Aplicacao.RecuperarStatusPedidoUC;
 import com.pasfinal.Aplicacao.Responses.StatusPedidoResponse;
 import com.pasfinal.Dominio.Entidades.Pedido;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import com.pasfinal.Aplicacao.Requests.SubmeterPedidoRequest;
+import com.pasfinal.Aplicacao.Responses.SubmeterPedidoResponse;
 
 @RestController
 @RequestMapping("/pedidos")
 public class PedidoController {
     private RecuperarStatusPedidoUC recuperarStatusUC;
+    private com.pasfinal.Aplicacao.SubmeterPedidoUC submeterPedidoUC;
 
-    public PedidoController(RecuperarStatusPedidoUC recuperarStatusUC){
+    public PedidoController(RecuperarStatusPedidoUC recuperarStatusUC, com.pasfinal.Aplicacao.SubmeterPedidoUC submeterPedidoUC){
         this.recuperarStatusUC = recuperarStatusUC;
+        this.submeterPedidoUC = submeterPedidoUC;
     }
 
     @GetMapping("/{id}/status")
@@ -44,5 +50,15 @@ public class PedidoController {
             case ENTREGUE: return "Entregue ao cliente";
             default: return st.name();
         }
+    }
+    
+    @PostMapping
+    @CrossOrigin("*")
+    public ResponseEntity<SubmeterPedidoResponse> submeterPedido(@RequestBody SubmeterPedidoRequest req) {
+        SubmeterPedidoResponse resp = submeterPedidoUC.run(req);
+        if ("NEGADO".equals(resp.getStatus())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(resp);
     }
 }
