@@ -63,3 +63,10 @@ create table if not exists cardapio_produto (
   foreign key (cardapio_id) references cardapios(id),
   foreign key (produto_id) references produtos(id)
 );
+
+create table if not exists pedidos (
+  id bigint primary key,
+  cliente_cpf varchar(15) not null,
+  status varchar(20) not null,
+  foreign key (cliente_cpf) references clientes(cpf)
+);
