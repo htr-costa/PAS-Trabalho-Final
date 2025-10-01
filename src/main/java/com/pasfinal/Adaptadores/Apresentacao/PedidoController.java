@@ -1,0 +1,48 @@
+package com.pasfinal.Adaptadores.Apresentacao;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.pasfinal.Aplicacao.RecuperarStatusPedidoUC;
+import com.pasfinal.Aplicacao.Responses.StatusPedidoResponse;
+import com.pasfinal.Dominio.Entidades.Pedido;
+
+@RestController
+@RequestMapping("/pedidos")
+public class PedidoController {
+    private RecuperarStatusPedidoUC recuperarStatusUC;
+
+    public PedidoController(RecuperarStatusPedidoUC recuperarStatusUC){
+        this.recuperarStatusUC = recuperarStatusUC;
+    }
+
+    @GetMapping("/{id}/status")
+    @CrossOrigin("*")
+    public ResponseEntity<StatusPedidoResponse> recuperaStatus(@PathVariable("id") long id){
+        Pedido.Status st = recuperarStatusUC.run(id);
+        if(st==null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(StatusPedidoResponse.naoEncontrado(id));
+        }
+        StatusPedidoResponse body = new StatusPedidoResponse(id, st.name(), descricaoStatus(st));
+        return ResponseEntity.ok(body);
+    }
+
+    private String descricaoStatus(Pedido.Status st){
+        switch (st){
+            case NOVO: return "Pedido criado aguardando aprovação";
+            case APROVADO: return "Pedido aprovado";
+            case PAGO: return "Pagamento confirmado";
+            case AGUARDANDO: return "Aguardando início do preparo";
+            case PREPARACAO: return "Em preparação";
+            case PRONTO: return "Pronto para envio";
+            case TRANSPORTE: return "Em transporte";
+            case ENTREGUE: return "Entregue ao cliente";
+            default: return st.name();
+        }
+    }
+}
