@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import com.pasfinal.Aplicacao.Requests.ItemPedidoRequest;
 import com.pasfinal.Aplicacao.Requests.SubmeterPedidoRequest;
 import com.pasfinal.Aplicacao.Responses.SubmeterPedidoResponse;
+import com.pasfinal.Dominio.Dados.ClienteRepository;
 import com.pasfinal.Dominio.Dados.PedidoRepository;
 import com.pasfinal.Dominio.Dados.ProdutosRepository;
 import com.pasfinal.Dominio.Dados.EstoqueRepository;
@@ -16,25 +17,56 @@ import com.pasfinal.Dominio.Entidades.Cliente;
 import com.pasfinal.Dominio.Entidades.ItemPedido;
 import com.pasfinal.Dominio.Entidades.Pedido;
 import com.pasfinal.Dominio.Entidades.Produto;
+import com.pasfinal.Dominio.Servicos.DescontosService;
+import com.pasfinal.Dominio.Servicos.ImpostosService;
 
 @Component
 public class SubmeterPedidoUC {
     private final ProdutosRepository produtosRepo;
     private final EstoqueRepository estoqueRepo;
     private final PedidoRepository pedidoRepo;
+    private final ClienteRepository clienteRepo;
+    private final ImpostosService impostosService;
+    private final DescontosService descontosService;
 
-    public SubmeterPedidoUC(ProdutosRepository produtosRepo, EstoqueRepository estoqueRepo, PedidoRepository pedidoRepo) {
+    public SubmeterPedidoUC(ProdutosRepository produtosRepo, EstoqueRepository estoqueRepo, 
+            PedidoRepository pedidoRepo, ClienteRepository clienteRepo,
+            ImpostosService impostosService, DescontosService descontosService) {
         this.produtosRepo = produtosRepo;
         this.estoqueRepo = estoqueRepo;
         this.pedidoRepo = pedidoRepo;
+        this.clienteRepo = clienteRepo;
+        this.impostosService = impostosService;
+        this.descontosService = descontosService;
     }
 
     public SubmeterPedidoResponse run(SubmeterPedidoRequest req) {
         long id = req.getId();
         String cpf = req.getClienteCpf();
+        String enderecoEntrega = req.getEnderecoEntrega();
+        
+        // verifica se já existe pedido com este ID
+        Pedido pedidoExistente = pedidoRepo.recuperaPorId(id);
+        if (pedidoExistente != null) {
+            throw new IllegalArgumentException("Já existe um pedido com o ID " + id);
+        }
+        
+        // recupera o cliente do banco de dados
+        Cliente cliente = clienteRepo.recuperaPorCpf(cpf);
+        if (cliente == null) {
+            throw new IllegalArgumentException("Cliente com CPF " + cpf + " não encontrado");
+        }
+        
         List<ItemPedido> itens = new ArrayList<>();
         double valor = 0;
         List<Long> itensIndisponiveis = new ArrayList<>();
+        
+        // cria pedido com status NOVO usando o cliente real do banco
+        Pedido pedidoNovo = new Pedido(id, cliente, enderecoEntrega, LocalDateTime.now(), 
+                null, List.of(), Pedido.Status.NOVO, 0, 0, 0, 0);
+        pedidoRepo.salva(pedidoNovo);
+        
+        // verifica disponibilidade de cada item
         for (ItemPedidoRequest ipr : req.getItens()) {
             Produto p = produtosRepo.recuperaProdutoPorid(ipr.getProdutoId());
             if (p == null) {
@@ -57,15 +89,21 @@ public class SubmeterPedidoUC {
             itens.add(new ItemPedido(p, ipr.getQuantidade()));
             valor += p.getPreco() * ipr.getQuantidade();
         }
+        
+        // se itens indisponíveis, retorna pedido negado
         if (!itensIndisponiveis.isEmpty()) {
             return SubmeterPedidoResponse.pedidoNegado(req.getId(), itensIndisponiveis);
         }
-    double impostos = valor * 0.1;
-        double desconto = 0.0;
+        
+        double desconto = descontosService.calcularDesconto(cpf, valor);
+        double impostos = impostosService.calcularImpostos(valor);
         double valorCobrado = valor - desconto + impostos;
-        Cliente cliente = new Cliente(cpf, "", "", "", "");
-        Pedido pedido = new Pedido(id, cliente, null, itens, Pedido.Status.APROVADO, valor, impostos, desconto, valorCobrado);
-    pedidoRepo.salva(pedido);
-    return SubmeterPedidoResponse.pedidoAprovado(id, valor, impostos, desconto, valorCobrado);
+        
+        // atualiza para APROVADO com valores calculados
+        Pedido pedidoAprovado = new Pedido(id, cliente, enderecoEntrega, LocalDateTime.now(), 
+                null, itens, Pedido.Status.APROVADO, valor, impostos, desconto, valorCobrado);
+        pedidoRepo.salva(pedidoAprovado);
+        
+        return SubmeterPedidoResponse.pedidoAprovado(id, valor, impostos, desconto, valorCobrado);
     }
 }

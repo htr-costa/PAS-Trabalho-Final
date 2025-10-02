@@ -1,5 +1,7 @@
 package com.pasfinal.Adaptadores.Apresentacao;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -55,10 +57,16 @@ public class PedidoController {
     @PostMapping
     @CrossOrigin("*")
     public ResponseEntity<SubmeterPedidoResponse> submeterPedido(@RequestBody SubmeterPedidoRequest req) {
-        SubmeterPedidoResponse resp = submeterPedidoUC.run(req);
-        if ("NEGADO".equals(resp.getStatus())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
+        try {
+            SubmeterPedidoResponse resp = submeterPedidoUC.run(req);
+            if ("NEGADO".equals(resp.getStatus())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
+            }
+            return ResponseEntity.status(HttpStatus.CREATED).body(resp);
+        } catch (IllegalArgumentException e) {
+            // ID duplicado ou cliente não encontrado
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(SubmeterPedidoResponse.pedidoNegado(req.getId(), List.of()));
         }
-        return ResponseEntity.status(HttpStatus.CREATED).body(resp);
     }
 }
