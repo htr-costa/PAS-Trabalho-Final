@@ -17,26 +17,19 @@ public class PagarPedidoUC {
     }
 
     public boolean run(long idPedido){
-        // Recupera o pedido
         Pedido pedido = pedidoRepository.recuperaPorId(idPedido);
         if(pedido == null) {
             return false;
         }
 
-        // Verifica se o pedido está em um estado válido para pagamento
-        if(pedido.getStatus() != Pedido.Status.NOVO && pedido.getStatus() != Pedido.Status.APROVADO){
+        if(pedido.getStatus() != Pedido.Status.APROVADO){
             return false;
         }
 
-        // Atualiza o status do pedido para PAGO
         pedido.setStatus(Pedido.Status.PAGO);
         pedidoRepository.salva(pedido);
-
-        // Coloca o pedido em AGUARDANDO (aguardando início do preparo)
         pedido.setStatus(Pedido.Status.AGUARDANDO);
         pedidoRepository.salva(pedido);
-
-        // Envia o pedido para a cozinha
         cozinhaService.chegadaDePedido(pedido);
 
         return true;

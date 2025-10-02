@@ -15,7 +15,6 @@ import com.pasfinal.Aplicacao.PagarPedidoUC;
 import com.pasfinal.Aplicacao.RecuperarStatusPedidoUC;
 import com.pasfinal.Aplicacao.Responses.StatusPedidoResponse;
 import com.pasfinal.Dominio.Entidades.Pedido;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import com.pasfinal.Aplicacao.Requests.SubmeterPedidoRequest;
 import com.pasfinal.Aplicacao.Responses.SubmeterPedidoResponse;
@@ -24,10 +23,12 @@ import com.pasfinal.Aplicacao.Responses.SubmeterPedidoResponse;
 @RequestMapping("/pedidos")
 public class PedidoController {
     private RecuperarStatusPedidoUC recuperarStatusUC;
+    private PagarPedidoUC pagarPedidoUC;
     private com.pasfinal.Aplicacao.SubmeterPedidoUC submeterPedidoUC;
 
-    public PedidoController(RecuperarStatusPedidoUC recuperarStatusUC, com.pasfinal.Aplicacao.SubmeterPedidoUC submeterPedidoUC){
+    public PedidoController(RecuperarStatusPedidoUC recuperarStatusUC, PagarPedidoUC pagarPedidoUC, com.pasfinal.Aplicacao.SubmeterPedidoUC submeterPedidoUC){
         this.recuperarStatusUC = recuperarStatusUC;
+        this.pagarPedidoUC = pagarPedidoUC;
         this.submeterPedidoUC = submeterPedidoUC;
     }
 
@@ -51,7 +52,6 @@ public class PedidoController {
                 .body(new StatusPedidoResponse(id, "ERRO", "Não foi possível processar o pagamento. Verifique se o pedido existe e está em estado válido."));
         }
         
-        // Recupera o status atualizado
         Pedido.Status st = recuperarStatusUC.run(id);
         StatusPedidoResponse body = new StatusPedidoResponse(id, st.name(), descricaoStatus(st));
         return ResponseEntity.ok(body);
@@ -81,7 +81,6 @@ public class PedidoController {
             }
             return ResponseEntity.status(HttpStatus.CREATED).body(resp);
         } catch (IllegalArgumentException e) {
-            // ID duplicado ou cliente não encontrado
             return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(SubmeterPedidoResponse.pedidoNegado(req.getId(), List.of()));
         }
