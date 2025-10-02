@@ -48,6 +48,11 @@ INSERT INTO receita_ingrediente (receita_id, ingrediente_id) VALUES (3, 8); -- P
 -- insercao dos produtos
 INSERT INTO produtos (id,descricao,preco) VALUES (1,'Pizza calabresa',5500);
 INSERT INTO produtos (id,descricao,preco) VALUES (2,'Pizza queijo e presunto',6000);
+
+-- insercao de pedidos de teste
+INSERT INTO pedidos (id, cliente_cpf, status) VALUES (1, '9001', 'NOVO');
+INSERT INTO pedidos (id, cliente_cpf, status) VALUES (2, '9002', 'APROVADO');
+INSERT INTO pedidos (id, cliente_cpf, status) VALUES (3, '9001', 'PAGO');
 INSERT INTO produtos (id,descricao,preco) VALUES (3,'Pizza margherita',4000);
 
 -- Associação dos produtos com as receitas
