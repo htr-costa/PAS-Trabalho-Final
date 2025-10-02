@@ -1,5 +1,7 @@
 package com.pasfinal.Adaptadores.Apresentacao;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -13,16 +15,20 @@ import com.pasfinal.Aplicacao.PagarPedidoUC;
 import com.pasfinal.Aplicacao.RecuperarStatusPedidoUC;
 import com.pasfinal.Aplicacao.Responses.StatusPedidoResponse;
 import com.pasfinal.Dominio.Entidades.Pedido;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import com.pasfinal.Aplicacao.Requests.SubmeterPedidoRequest;
+import com.pasfinal.Aplicacao.Responses.SubmeterPedidoResponse;
 
 @RestController
 @RequestMapping("/pedidos")
 public class PedidoController {
     private RecuperarStatusPedidoUC recuperarStatusUC;
-    private PagarPedidoUC pagarPedidoUC;
+    private com.pasfinal.Aplicacao.SubmeterPedidoUC submeterPedidoUC;
 
-    public PedidoController(RecuperarStatusPedidoUC recuperarStatusUC, PagarPedidoUC pagarPedidoUC){
+    public PedidoController(RecuperarStatusPedidoUC recuperarStatusUC, com.pasfinal.Aplicacao.SubmeterPedidoUC submeterPedidoUC){
         this.recuperarStatusUC = recuperarStatusUC;
-        this.pagarPedidoUC = pagarPedidoUC;
+        this.submeterPedidoUC = submeterPedidoUC;
     }
 
     @GetMapping("/{id}/status")
@@ -62,6 +68,22 @@ public class PedidoController {
             case TRANSPORTE: return "Em transporte";
             case ENTREGUE: return "Entregue ao cliente";
             default: return st.name();
+        }
+    }
+    
+    @PostMapping
+    @CrossOrigin("*")
+    public ResponseEntity<SubmeterPedidoResponse> submeterPedido(@RequestBody SubmeterPedidoRequest req) {
+        try {
+            SubmeterPedidoResponse resp = submeterPedidoUC.run(req);
+            if ("NEGADO".equals(resp.getStatus())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
+            }
+            return ResponseEntity.status(HttpStatus.CREATED).body(resp);
+        } catch (IllegalArgumentException e) {
+            // ID duplicado ou cliente não encontrado
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(SubmeterPedidoResponse.pedidoNegado(req.getId(), List.of()));
         }
     }
 }
