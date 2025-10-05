@@ -70,4 +70,9 @@ create table if not exists usuarios (
   username varchar(50) not null unique,
   password varchar(100) not null,
   tipo varchar(20) default 'USUARIO' -- USUARIO ou ADMIN
+create table if not exists pedidos (
+  id bigint primary key,
+  cliente_cpf varchar(15) not null,
+  status varchar(20) not null,
+  foreign key (cliente_cpf) references clientes(cpf)
 );
