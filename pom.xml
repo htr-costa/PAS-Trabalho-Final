@@ -8,11 +8,11 @@
 		<version>3.5.4</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.bcopstein</groupId>
-	<artifactId>ex4-lancheriaddd-v1</artifactId>
+	<groupId>com.pasfinal</groupId>
+	<artifactId>telepizza</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>ex4-lancheriaddd-v1</name>
-	<description>Demo project for Spring Boot</description>
+	<name>TelePizza</name>
+	<description>Sistema de pedidos de pizza online desenvolvido com arquitetura limpa (Clean Architecture) e Domain-Driven Design (DDD). Permite gerenciamento de cardápios, pedidos, estoque e processamento de pagamentos.</description>
 	<url/>
 	<licenses>
 		<license/>
