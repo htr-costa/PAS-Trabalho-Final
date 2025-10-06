@@ -49,11 +49,11 @@ public class PedidoController {
         boolean sucesso = pagarPedidoUC.run(id);
         if(!sucesso) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new StatusPedidoResponse(id, "ERRO", "Não foi possível processar o pagamento. Verifique se o pedido existe e está em estado válido."));
+                .body(new StatusPedidoResponse(id, "ERRO", "Não foi possível processar o pagamento. Verifique se o pedido existe e está em estado APROVADO."));
         }
         
         Pedido.Status st = recuperarStatusUC.run(id);
-        StatusPedidoResponse body = new StatusPedidoResponse(id, st.name(), descricaoStatus(st));
+        StatusPedidoResponse body = new StatusPedidoResponse(id, st.name(), "Pagamento confirmado com sucesso! Pedido enviado para a cozinha.");
         return ResponseEntity.ok(body);
     }
 

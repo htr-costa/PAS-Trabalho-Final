@@ -40,6 +40,9 @@ public class CozinhaService {
     }
 
     public synchronized void chegadaDePedido(Pedido p) {
+        p.setStatus(Pedido.Status.AGUARDANDO);
+        pedidoRepository.salva(p);
+        
         filaEntrada.add(p);
         System.out.println("Pedido na fila de entrada: "+p);
         if (emPreparacao == null) {
