@@ -30,14 +30,12 @@ public class EntregaService {
         pedido.setStatus(Pedido.Status.TRANSPORTE);
         pedidoRepository.salva(pedido);
         emTransporte = pedido;
-        System.out.println("Pedido em transporte: "+pedido);
         // Agenda pedidoEntregue para ser chamado em 5 segundos
         scheduler.schedule(() -> pedidoEntregue(), 5, TimeUnit.SECONDS);
     }
 
     public synchronized void receberPedidoPronto(Pedido p) {
         filaEntrega.add(p);
-        System.out.println("Pedido recebido para entrega: "+p);
         if (emTransporte == null) {
             colocaEmTransporte(filaEntrega.poll());
         }
@@ -46,7 +44,6 @@ public class EntregaService {
     public synchronized void pedidoEntregue() {
         emTransporte.setStatus(Pedido.Status.ENTREGUE);
         pedidoRepository.salva(emTransporte);
-        System.out.println("Pedido entregue: "+emTransporte);
         emTransporte = null;
         // Se tem pedidos na fila, programa o transporte para daqui a 1 segundo
         if (!filaEntrega.isEmpty()){

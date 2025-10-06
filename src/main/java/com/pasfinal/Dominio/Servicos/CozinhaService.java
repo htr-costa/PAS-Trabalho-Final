@@ -34,7 +34,6 @@ public class CozinhaService {
         pedido.setStatus(Pedido.Status.PREPARACAO);
         pedidoRepository.salva(pedido);
         emPreparacao = pedido;
-        System.out.println("Pedido em preparacao: "+pedido);
         // Agenda pedidoPronto para ser chamado em 5 segundos
         scheduler.schedule(() -> pedidoPronto(), 5, TimeUnit.SECONDS);
     }
@@ -44,7 +43,6 @@ public class CozinhaService {
         pedidoRepository.salva(p);
         
         filaEntrada.add(p);
-        System.out.println("Pedido na fila de entrada: "+p);
         if (emPreparacao == null) {
             colocaEmPreparacao(filaEntrada.poll());
         }
@@ -54,7 +52,6 @@ public class CozinhaService {
         emPreparacao.setStatus(Pedido.Status.PRONTO);
         pedidoRepository.salva(emPreparacao);
         filaSaida.add(emPreparacao);
-        System.out.println("Pedido na fila de saida: "+emPreparacao);
         
         // Envia o pedido para o setor de entregas
         entregaService.receberPedidoPronto(emPreparacao);

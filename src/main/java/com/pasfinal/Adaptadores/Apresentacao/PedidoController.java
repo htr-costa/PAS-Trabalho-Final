@@ -19,16 +19,17 @@ import com.pasfinal.Dominio.Entidades.Pedido;
 import org.springframework.web.bind.annotation.RequestBody;
 import com.pasfinal.Aplicacao.Requests.SubmeterPedidoRequest;
 import com.pasfinal.Aplicacao.Responses.SubmeterPedidoResponse;
+import com.pasfinal.Aplicacao.SubmeterPedidoUC;
 
 @RestController
 @RequestMapping("/pedidos")
 public class PedidoController {
     private RecuperarStatusPedidoUC recuperarStatusUC;
     private PagarPedidoUC pagarPedidoUC;
-    private com.pasfinal.Aplicacao.SubmeterPedidoUC submeterPedidoUC;
+    private SubmeterPedidoUC submeterPedidoUC;
     private CancelarPedidoUC cancelarPedidoUC;
 
-    public PedidoController(RecuperarStatusPedidoUC recuperarStatusUC, PagarPedidoUC pagarPedidoUC, com.pasfinal.Aplicacao.SubmeterPedidoUC submeterPedidoUC, CancelarPedidoUC cancelarPedidoUC){
+    public PedidoController(RecuperarStatusPedidoUC recuperarStatusUC, PagarPedidoUC pagarPedidoUC, SubmeterPedidoUC submeterPedidoUC, CancelarPedidoUC cancelarPedidoUC){
         this.recuperarStatusUC = recuperarStatusUC;
         this.pagarPedidoUC = pagarPedidoUC;
         this.submeterPedidoUC = submeterPedidoUC;
