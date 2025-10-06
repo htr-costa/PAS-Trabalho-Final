@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 
 import com.pasfinal.Dominio.Dados.ProdutosRepository;
 import com.pasfinal.Dominio.Dados.ReceitasRepository;
-import com.pasfinal.Dominio.Entidades.Ingrediente;
 import com.pasfinal.Dominio.Entidades.Produto;
 import com.pasfinal.Dominio.Entidades.Receita;
 

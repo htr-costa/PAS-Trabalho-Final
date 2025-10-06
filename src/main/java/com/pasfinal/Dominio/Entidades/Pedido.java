@@ -17,6 +17,8 @@ public class Pedido {
     }
     private long id;
     private Cliente cliente;
+    private String enderecoEntrega;
+    private LocalDateTime dataHoraPedido;
     private LocalDateTime dataHoraPagamento;
     private List<ItemPedido> itens;
     private Status status;
@@ -25,10 +27,13 @@ public class Pedido {
     private double desconto;
     private double valorCobrado;
 
-    public Pedido(long id, Cliente cliente, LocalDateTime dataHoraPagamento, List<ItemPedido> itens,
+    public Pedido(long id, Cliente cliente, String enderecoEntrega, LocalDateTime dataHoraPedido, 
+            LocalDateTime dataHoraPagamento, List<ItemPedido> itens,
             Pedido.Status status, double valor, double impostos, double desconto, double valorCobrado) {
         this.id = id;
         this.cliente = cliente;
+        this.enderecoEntrega = enderecoEntrega;
+        this.dataHoraPedido = dataHoraPedido;
         this.dataHoraPagamento = dataHoraPagamento;
         this.itens = itens;
         this.status = status;
@@ -44,6 +49,14 @@ public class Pedido {
 
     public Cliente getCliente() {
         return cliente;
+    }
+
+    public String getEnderecoEntrega() {
+        return enderecoEntrega;
+    }
+
+    public LocalDateTime getDataHoraPedido() {
+        return dataHoraPedido;
     }
 
     public LocalDateTime getDataHoraPagamento() {

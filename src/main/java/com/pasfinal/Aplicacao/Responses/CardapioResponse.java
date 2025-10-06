@@ -1,8 +1,6 @@
 package com.pasfinal.Aplicacao.Responses;
 
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 import com.pasfinal.Dominio.Entidades.Cardapio;
 import com.pasfinal.Dominio.Entidades.Produto;
