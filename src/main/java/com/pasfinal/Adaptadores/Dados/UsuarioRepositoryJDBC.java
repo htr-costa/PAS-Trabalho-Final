@@ -51,4 +51,14 @@ public class UsuarioRepositoryJDBC implements UsuarioRepository {
             return Optional.empty();
         }
     }
+
+    @Override
+    public void salva(Usuario usuario) {
+        Long id = jdbcTemplate.queryForObject("SELECT COALESCE(MAX(id),0)+1 FROM usuarios", Long.class);
+        usuario.setId(id);
+        jdbcTemplate.update(
+            "INSERT INTO usuarios (id, username, password, tipo) VALUES (?, ?, ?, ?)",
+            id, usuario.getUsername(), usuario.getPassword(), usuario.getTipo());
+    }
+
 }

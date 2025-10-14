@@ -2,6 +2,8 @@ package com.pasfinal.Adaptadores.Apresentacao;
 
 import com.pasfinal.Dominio.Entidades.Usuario;
 import com.pasfinal.Dominio.Servicos.AutenticacaoService;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -38,6 +40,21 @@ public class AutenticacaoController {
             "usuario", usuario.getUsername(),
             "tipo", usuario.getTipo()
         ));
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody Map<String, String> body) {
+        String username = body.get("username");
+        String password = body.get("password");
+        if (username == null || password == null) {
+            return ResponseEntity.badRequest().body("username e password obrigatórios");
+        }
+        Usuario usuario = new Usuario(username, password, "USUARIO");
+        boolean ok = autenticacaoService.registra(usuario);
+        if (!ok) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Usuario já existe");
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message", "Usuário registrado", "id", usuario.getId()));
     }
 
     @PostMapping("/logout")
