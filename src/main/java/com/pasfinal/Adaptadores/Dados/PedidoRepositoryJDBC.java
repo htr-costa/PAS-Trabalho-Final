@@ -110,4 +110,17 @@ public class PedidoRepositoryJDBC implements PedidoRepository {
             dataInicio,
             dataFim);
     }
+
+    @Override
+    public List<Pedido> listarPedidosClienteEntreguesEntreDatas(String clienteCpf, LocalDate dataInicio, LocalDate dataFim) {
+        return jdbcTemplate.query(
+            "SELECT id, cliente_cpf, endereco_entrega, data_hora_pedido, data_hora_pagamento, status, valor, impostos, desconto, valor_cobrado " +
+            "FROM pedidos " +
+            "WHERE cliente_cpf = ? AND status = 'ENTREGUE' AND CAST(data_hora_pedido AS DATE) >= ? AND CAST(data_hora_pedido AS DATE) <= ? " +
+            "ORDER BY data_hora_pedido DESC",
+            mapperPedidoBasico,
+            clienteCpf,
+            dataInicio,
+            dataFim);
+    }
 }

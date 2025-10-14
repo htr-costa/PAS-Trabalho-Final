@@ -16,4 +16,5 @@ public interface PedidoRepository {
      */
     int contarPedidosClienteApos(String cpfCliente, LocalDateTime dataLimite);
     List<Pedido> listarPedidosEntreguesEntreDatas(LocalDate dataInicio, LocalDate dataFim);
+    List<Pedido> listarPedidosClienteEntreguesEntreDatas(String clienteCpf, LocalDate dataInicio, LocalDate dataFim);
 }
