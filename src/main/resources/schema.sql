@@ -64,6 +64,15 @@ create table if not exists cardapio_produto (
   foreign key (produto_id) references produtos(id)
 );
 
+-- Tabela simples de Usuários para autenticação
+create table if not exists usuarios (
+  id bigint primary key,
+  username varchar(50) not null unique,
+  password varchar(100) not null,
+  tipo varchar(20) default 'USUARIO'
+);
+
+-- Tabela de Pedidos
 create table if not exists pedidos (
   id bigint primary key,
   cliente_cpf varchar(15) not null,
