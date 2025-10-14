@@ -3,6 +3,7 @@ package com.pasfinal.Adaptadores.Dados;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -96,5 +97,30 @@ public class PedidoRepositoryJDBC implements PedidoRepository {
             dataLimite);
         
         return resultado.isEmpty() ? 0 : resultado.get(0);
+    }
+
+    @Override
+    public List<Pedido> listarPedidosEntreguesEntreDatas(LocalDate dataInicio, LocalDate dataFim) {
+        return jdbcTemplate.query(
+            "SELECT id, cliente_cpf, endereco_entrega, data_hora_pedido, data_hora_pagamento, status, valor, impostos, desconto, valor_cobrado " +
+            "FROM pedidos " +
+            "WHERE status = 'ENTREGUE' AND CAST(data_hora_pedido AS DATE) >= ? AND CAST(data_hora_pedido AS DATE) <= ? " +
+            "ORDER BY data_hora_pedido DESC",
+            mapperPedidoBasico,
+            dataInicio,
+            dataFim);
+    }
+
+    @Override
+    public List<Pedido> listarPedidosClienteEntreguesEntreDatas(String clienteCpf, LocalDate dataInicio, LocalDate dataFim) {
+        return jdbcTemplate.query(
+            "SELECT id, cliente_cpf, endereco_entrega, data_hora_pedido, data_hora_pagamento, status, valor, impostos, desconto, valor_cobrado " +
+            "FROM pedidos " +
+            "WHERE cliente_cpf = ? AND status = 'ENTREGUE' AND CAST(data_hora_pedido AS DATE) >= ? AND CAST(data_hora_pedido AS DATE) <= ? " +
+            "ORDER BY data_hora_pedido DESC",
+            mapperPedidoBasico,
+            clienteCpf,
+            dataInicio,
+            dataFim);
     }
 }

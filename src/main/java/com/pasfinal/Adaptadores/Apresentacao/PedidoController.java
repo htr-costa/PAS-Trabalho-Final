@@ -1,7 +1,10 @@
 package com.pasfinal.Adaptadores.Apresentacao;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -9,11 +12,17 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.pasfinal.Aplicacao.ListarPedidosEntreguesUC;
+import com.pasfinal.Aplicacao.ListarPedidosClienteEntreguesUC;
 import com.pasfinal.Aplicacao.PagarPedidoUC;
 import com.pasfinal.Aplicacao.RecuperarStatusPedidoUC;
 import com.pasfinal.Aplicacao.CancelarPedidoUC;
+import com.pasfinal.Aplicacao.Requests.ListarPedidosEntreguesRequest;
+import com.pasfinal.Aplicacao.Requests.ListarPedidosClienteEntreguesRequest;
+import com.pasfinal.Aplicacao.Responses.ListarPedidosEntreguesResponse;
 import com.pasfinal.Aplicacao.Responses.StatusPedidoResponse;
 import com.pasfinal.Dominio.Entidades.Pedido;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,12 +37,19 @@ public class PedidoController {
     private PagarPedidoUC pagarPedidoUC;
     private SubmeterPedidoUC submeterPedidoUC;
     private CancelarPedidoUC cancelarPedidoUC;
+    private ListarPedidosEntreguesUC listarPedidosEntreguesUC;
+    private ListarPedidosClienteEntreguesUC listarPedidosClienteEntreguesUC;
 
-    public PedidoController(RecuperarStatusPedidoUC recuperarStatusUC, PagarPedidoUC pagarPedidoUC, SubmeterPedidoUC submeterPedidoUC, CancelarPedidoUC cancelarPedidoUC){
+    public PedidoController(RecuperarStatusPedidoUC recuperarStatusUC, PagarPedidoUC pagarPedidoUC, 
+            SubmeterPedidoUC submeterPedidoUC, CancelarPedidoUC cancelarPedidoUC,
+            ListarPedidosEntreguesUC listarPedidosEntreguesUC,
+            ListarPedidosClienteEntreguesUC listarPedidosClienteEntreguesUC){
         this.recuperarStatusUC = recuperarStatusUC;
         this.pagarPedidoUC = pagarPedidoUC;
         this.submeterPedidoUC = submeterPedidoUC;
         this.cancelarPedidoUC = cancelarPedidoUC;
+        this.listarPedidosEntreguesUC = listarPedidosEntreguesUC;
+        this.listarPedidosClienteEntreguesUC = listarPedidosClienteEntreguesUC;
     }
 
     @GetMapping("/{id}/status")
@@ -104,6 +120,35 @@ public class PedidoController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(SubmeterPedidoResponse.pedidoNegado(req.getId(), List.of()));
+        }
+    }
+
+    @GetMapping("/entregues")
+    @CrossOrigin("*")
+    public ResponseEntity<ListarPedidosEntreguesResponse> listarPedidosEntregues(
+            @RequestParam("dataInicio") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
+            @RequestParam("dataFim") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim) {
+        try {
+            ListarPedidosEntreguesRequest request = new ListarPedidosEntreguesRequest(dataInicio, dataFim);
+            ListarPedidosEntreguesResponse response = listarPedidosEntreguesUC.run(request);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+    }
+
+    @GetMapping("/entregues/cliente/{cpf}")
+    @CrossOrigin("*")
+    public ResponseEntity<ListarPedidosEntreguesResponse> listarPedidosClienteEntregues(
+            @PathVariable("cpf") String cpf,
+            @RequestParam("dataInicio") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
+            @RequestParam("dataFim") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim) {
+        try {
+            ListarPedidosClienteEntreguesRequest request = new ListarPedidosClienteEntreguesRequest(cpf, dataInicio, dataFim);
+            ListarPedidosEntreguesResponse response = listarPedidosClienteEntreguesUC.run(request);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }
 }
