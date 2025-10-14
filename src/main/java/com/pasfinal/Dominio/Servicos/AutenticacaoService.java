@@ -25,4 +25,15 @@ public class AutenticacaoService {
     public boolean isUsuario(Usuario usuario) {
         return usuario != null && usuario.isUsuario();
     }
+
+    public boolean registra(Usuario usuario) {
+        if (usuario == null || usuario.getUsername() == null) return false;
+        if (usuarioRepository.findByUsername(usuario.getUsername()).isPresent()) {
+            return false;
+        }
+        if (usuario.getTipo() == null) usuario.setTipo("USUARIO");
+        usuarioRepository.salva(usuario);
+        return true;
+    }
+
 }
