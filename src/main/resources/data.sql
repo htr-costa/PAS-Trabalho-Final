@@ -79,8 +79,11 @@ INSERT INTO cardapio_produto (cardapio_id,produto_id) VALUES (1,3);
 INSERT INTO cardapio_produto (cardapio_id,produto_id) VALUES (2,1);
 INSERT INTO cardapio_produto (cardapio_id,produto_id) VALUES (2,3);
 
--- Inserção de usuários simples (senha em texto simples para facilitar)
+-- Inserção de usuários simples
 INSERT INTO usuarios (id, username, password, tipo) VALUES (1, 'admin', '123456', 'ADMIN');
 INSERT INTO usuarios (id, username, password, tipo) VALUES (2, 'usuario', '123456', 'USUARIO');
+
 -- Pedido de exemplo para testes de status
 INSERT INTO pedidos (id,cliente_cpf,status) VALUES (1,'9001','NOVO');
+INSERT INTO pedidos (id,cliente_cpf,status) VALUES (2,'9002','APROVADO');
+INSERT INTO pedidos (id,cliente_cpf,status) VALUES (3,'9001','PAGO');
