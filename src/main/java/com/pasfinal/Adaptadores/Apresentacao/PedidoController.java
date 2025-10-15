@@ -135,11 +135,12 @@ public class PedidoController {
         Usuario usuario = (Usuario) session.getAttribute("usuario");
         if (usuario == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(new SubmeterPedidoResponse(0, "NAO_AUTORIZADO", 0, 0, 0, 0, List.of()));
+                .body(new SubmeterPedidoResponse(0, "NAO_AUTORIZADO", 0, 0, 0, 0, null, List.of()));
         }
         
         try {
-            SubmeterPedidoResponse resp = submeterPedidoUC.run(req);
+            // Passa o email do usuário autenticado para recuperar dados do cliente
+            SubmeterPedidoResponse resp = submeterPedidoUC.run(req, usuario.getUsername());
             if ("NEGADO".equals(resp.getStatus())) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
             }

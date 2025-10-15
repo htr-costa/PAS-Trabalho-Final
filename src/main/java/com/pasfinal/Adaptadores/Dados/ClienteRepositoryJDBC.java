@@ -46,6 +46,19 @@ public class ClienteRepositoryJDBC implements ClienteRepository {
     }
 
     @Override
+    public Cliente recuperaPorEmail(String email) {
+        List<Cliente> lst = jdbcTemplate.query(
+            "SELECT cpf, nome, celular, endereco, email FROM clientes WHERE email = ?",
+            mapperCliente,
+            email);
+        
+        if (lst.isEmpty()) {
+            return null;
+        }
+        return lst.get(0);
+    }
+
+    @Override
     public void salva(Cliente cliente) {
         try {
             jdbcTemplate.update(

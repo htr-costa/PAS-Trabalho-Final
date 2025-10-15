@@ -40,10 +40,8 @@ public class SubmeterPedidoUC {
         this.descontosService = descontosService;
     }
 
-    public SubmeterPedidoResponse run(SubmeterPedidoRequest req) {
+    public SubmeterPedidoResponse run(SubmeterPedidoRequest req, String emailUsuario) {
         long id = req.getId();
-        String cpf = req.getClienteCpf();
-        String enderecoEntrega = req.getEnderecoEntrega();
         
         // verifica se já existe pedido com este ID
         Pedido pedidoExistente = pedidoRepo.recuperaPorId(id);
@@ -51,11 +49,14 @@ public class SubmeterPedidoUC {
             throw new IllegalArgumentException("Já existe um pedido com o ID " + id);
         }
         
-        // recupera o cliente do banco de dados
-        Cliente cliente = clienteRepo.recuperaPorCpf(cpf);
+        // recupera o cliente pelo email do usuário autenticado
+        Cliente cliente = clienteRepo.recuperaPorEmail(emailUsuario);
         if (cliente == null) {
-            throw new IllegalArgumentException("Cliente com CPF " + cpf + " não encontrado");
+            throw new IllegalArgumentException("Cliente não encontrado para o email: " + emailUsuario);
         }
+        
+        String enderecoEntrega = cliente.getEndereco();
+        String cpf = cliente.getCpf();
         
         List<ItemPedido> itens = new ArrayList<>();
         double valor = 0;
@@ -104,6 +105,6 @@ public class SubmeterPedidoUC {
                 null, itens, Pedido.Status.APROVADO, valor, impostos, desconto, valorCobrado);
         pedidoRepo.salva(pedidoAprovado);
         
-        return SubmeterPedidoResponse.pedidoAprovado(id, valor, impostos, desconto, valorCobrado);
+        return SubmeterPedidoResponse.pedidoAprovado(id, valor, impostos, desconto, valorCobrado, enderecoEntrega);
     }
 }
