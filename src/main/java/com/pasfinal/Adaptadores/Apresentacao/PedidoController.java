@@ -29,6 +29,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import com.pasfinal.Aplicacao.Requests.SubmeterPedidoRequest;
 import com.pasfinal.Aplicacao.Responses.SubmeterPedidoResponse;
 import com.pasfinal.Aplicacao.SubmeterPedidoUC;
+import com.pasfinal.Dominio.Entidades.Usuario;
+
+import jakarta.servlet.http.HttpSession;
 
 @RestController
 @RequestMapping("/pedidos")
@@ -54,7 +57,13 @@ public class PedidoController {
 
     @GetMapping("/{id}/status")
     @CrossOrigin("*")
-    public ResponseEntity<StatusPedidoResponse> recuperaStatus(@PathVariable("id") long id){
+    public ResponseEntity<StatusPedidoResponse> recuperaStatus(@PathVariable("id") long id, HttpSession session){
+        Usuario usuario = (Usuario) session.getAttribute("usuario");
+        if (usuario == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new StatusPedidoResponse(id, "NAO_AUTORIZADO", "Usuário não autenticado. Faça login para consultar o status do pedido."));
+        }
+        
         Pedido.Status st = recuperarStatusUC.run(id);
         if(st==null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(StatusPedidoResponse.naoEncontrado(id));
@@ -65,7 +74,13 @@ public class PedidoController {
 
     @PostMapping("/{id}/pagamento")
     @CrossOrigin("*")
-    public ResponseEntity<StatusPedidoResponse> pagarPedido(@PathVariable("id") long id){
+    public ResponseEntity<StatusPedidoResponse> pagarPedido(@PathVariable("id") long id, HttpSession session){
+        Usuario usuario = (Usuario) session.getAttribute("usuario");
+        if (usuario == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new StatusPedidoResponse(id, "NAO_AUTORIZADO", "Usuário não autenticado. Faça login para pagar o pedido."));
+        }
+        
         boolean sucesso = pagarPedidoUC.run(id);
         if(!sucesso) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -94,7 +109,13 @@ public class PedidoController {
 
     @PostMapping("/{id}/cancelamento")
     @CrossOrigin("*")
-    public ResponseEntity<StatusPedidoResponse> cancela(@PathVariable("id") long id){
+    public ResponseEntity<StatusPedidoResponse> cancela(@PathVariable("id") long id, HttpSession session){
+        Usuario usuario = (Usuario) session.getAttribute("usuario");
+        if (usuario == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new StatusPedidoResponse(id, "NAO_AUTORIZADO", "Usuário não autenticados."));
+        }
+        
         boolean ok = cancelarPedidoUC.run(id);
         if(!ok){
             Pedido.Status st = recuperarStatusUC.run(id);
@@ -110,7 +131,13 @@ public class PedidoController {
     
     @PostMapping
     @CrossOrigin("*")
-    public ResponseEntity<SubmeterPedidoResponse> submeterPedido(@RequestBody SubmeterPedidoRequest req) {
+    public ResponseEntity<SubmeterPedidoResponse> submeterPedido(@RequestBody SubmeterPedidoRequest req, HttpSession session) {
+        Usuario usuario = (Usuario) session.getAttribute("usuario");
+        if (usuario == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new SubmeterPedidoResponse(0, "NAO_AUTORIZADO", 0, 0, 0, 0, List.of()));
+        }
+        
         try {
             SubmeterPedidoResponse resp = submeterPedidoUC.run(req);
             if ("NEGADO".equals(resp.getStatus())) {
