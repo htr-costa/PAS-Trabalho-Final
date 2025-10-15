@@ -4,4 +4,5 @@ import com.pasfinal.Dominio.Entidades.Cliente;
 
 public interface ClienteRepository {
     Cliente recuperaPorCpf(String cpf);
+    void salva(Cliente cliente);
 }
