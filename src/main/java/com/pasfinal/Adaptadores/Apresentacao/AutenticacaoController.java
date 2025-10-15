@@ -1,5 +1,7 @@
 package com.pasfinal.Adaptadores.Apresentacao;
 
+import com.pasfinal.Dominio.Dados.ClienteRepository;
+import com.pasfinal.Dominio.Entidades.Cliente;
 import com.pasfinal.Dominio.Entidades.Usuario;
 import com.pasfinal.Dominio.Servicos.AutenticacaoService;
 
@@ -16,9 +18,11 @@ import java.util.Optional;
 @CrossOrigin(origins = "*")
 public class AutenticacaoController {
     private final AutenticacaoService autenticacaoService;
+    private final ClienteRepository clienteRepository;
 
-    public AutenticacaoController(AutenticacaoService autenticacaoService) {
+    public AutenticacaoController(AutenticacaoService autenticacaoService, ClienteRepository clienteRepository) {
         this.autenticacaoService = autenticacaoService;
+        this.clienteRepository = clienteRepository;
     }
 
     @PostMapping("/login")
@@ -44,17 +48,42 @@ public class AutenticacaoController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody Map<String, String> body) {
-        String username = body.get("username");
+        String email = body.get("email");
         String password = body.get("password");
-        if (username == null || password == null) {
-            return ResponseEntity.badRequest().body("username e password obrigatórios");
+
+        if (email == null || password == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "email e password são obrigatórios"));
         }
-        Usuario usuario = new Usuario(username, password, "USUARIO");
+
+        Usuario usuario = new Usuario();
+        usuario.setUsername(email);
+        usuario.setPassword(password);
+        usuario.setTipo("USUARIO");
+
         boolean ok = autenticacaoService.registra(usuario);
         if (!ok) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Usuario já existe");
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "Email já cadastrado"));
         }
-        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message", "Usuário registrado", "id", usuario.getId()));
+
+        String cpf = body.get("cpf");
+        String nome = body.get("nome");
+        if (cpf != null && nome != null) {
+            try {
+                Cliente existente = clienteRepository.recuperaPorCpf(cpf);
+                if (existente == null) {
+                    Cliente c = new Cliente(cpf, nome,
+                        body.getOrDefault("celular", ""),
+                        body.getOrDefault("endereco", ""),
+                        email);
+                    clienteRepository.salva(c);
+                }
+            } catch (Exception ignored) {
+                // não atrapalhar o fluxo principal; opcional log
+            }
+        }
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(Map.of("message", "Usuário registrado", "username", email));
     }
 
     @PostMapping("/logout")

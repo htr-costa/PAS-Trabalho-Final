@@ -4,6 +4,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -43,4 +44,21 @@ public class ClienteRepositoryJDBC implements ClienteRepository {
         }
         return lst.get(0);
     }
+
+    @Override
+    public void salva(Cliente cliente) {
+        try {
+            jdbcTemplate.update(
+                "INSERT INTO clientes (cpf, nome, celular, endereco, email) VALUES (?,?,?,?,?)",
+                cliente.getCpf(),
+                cliente.getNome(),
+                cliente.getCelular(),
+                cliente.getEndereco(),
+                cliente.getEmail()
+            );
+        } catch (DataAccessException ex) {
+            throw new IllegalStateException("Erro ao salvar cliente: " + ex.getMessage());
+        }
+    }
+
 }
