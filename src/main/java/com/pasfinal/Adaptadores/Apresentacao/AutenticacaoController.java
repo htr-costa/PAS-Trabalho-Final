@@ -50,11 +50,40 @@ public class AutenticacaoController {
     public ResponseEntity<?> register(@RequestBody Map<String, String> body) {
         String email = body.get("email");
         String password = body.get("password");
+        String cpf = body.get("cpf");
+        String nome = body.get("nome");
+        String celular = body.get("celular");
+        String endereco = body.get("endereco");
 
-        if (email == null || password == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "email e password são obrigatórios"));
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Email é obrigatório"));
+        }
+        if (password == null || password.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Senha é obrigatória"));
+        }
+        if (cpf == null || cpf.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "CPF é obrigatório"));
+        }
+        if (nome == null || nome.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Nome é obrigatório"));
+        }
+        if (celular == null || celular.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Celular é obrigatório"));
+        }
+        if (endereco == null || endereco.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Endereço é obrigatório"));
         }
 
+        try {
+            Cliente clienteExistente = clienteRepository.recuperaPorCpf(cpf);
+            if (clienteExistente != null) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("error", "CPF já cadastrado"));
+            }
+        } catch (Exception e) {
+        }
+
+        // criar usuario para autenticação
         Usuario usuario = new Usuario();
         usuario.setUsername(email);
         usuario.setPassword(password);
@@ -62,28 +91,26 @@ public class AutenticacaoController {
 
         boolean ok = autenticacaoService.registra(usuario);
         if (!ok) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "Email já cadastrado"));
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("error", "Email já cadastrado"));
         }
 
-        String cpf = body.get("cpf");
-        String nome = body.get("nome");
-        if (cpf != null && nome != null) {
-            try {
-                Cliente existente = clienteRepository.recuperaPorCpf(cpf);
-                if (existente == null) {
-                    Cliente c = new Cliente(cpf, nome,
-                        body.getOrDefault("celular", ""),
-                        body.getOrDefault("endereco", ""),
-                        email);
-                    clienteRepository.salva(c);
-                }
-            } catch (Exception ignored) {
-                // não atrapalhar o fluxo principal; opcional log
-            }
+        // criar cliente
+        try {
+            Cliente cliente = new Cliente(cpf, nome, celular, endereco, email);
+            clienteRepository.salva(cliente);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "Erro ao cadastrar cliente: " + e.getMessage()));
         }
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(Map.of("message", "Usuário registrado", "username", email));
+                .body(Map.of(
+                    "message", "Cliente registrado com sucesso",
+                    "email", email,
+                    "cpf", cpf,
+                    "nome", nome
+                ));
     }
 
     @PostMapping("/logout")
