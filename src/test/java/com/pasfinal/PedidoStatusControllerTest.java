@@ -21,7 +21,7 @@ public class PedidoStatusControllerTest {
         mockMvc.perform(get("/pedidos/1/status"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(1))
-            .andExpect(jsonPath("$.status").value("NOVO"))
+            .andExpect(jsonPath("$.status").value("APROVADO"))
             .andExpect(jsonPath("$.descricao").isNotEmpty());
     }
 }

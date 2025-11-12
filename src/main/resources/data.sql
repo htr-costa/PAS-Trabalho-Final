@@ -1,3 +1,15 @@
+-- Limpeza para permitir reexecução sem violar PK/FK (ordem: dependentes -> bases)
+DELETE FROM pedidos; -- depende de clientes
+DELETE FROM cardapio_produto;
+DELETE FROM produto_receita;
+DELETE FROM receita_ingrediente;
+DELETE FROM itensEstoque; -- depende de ingredientes
+DELETE FROM produtos;
+DELETE FROM receitas;
+DELETE FROM cardapios;
+DELETE FROM ingredientes;
+DELETE FROM clientes;
+
 -- Inserção dos clientes
 INSERT INTO clientes (cpf, nome, celular, endereco, email) VALUES ('9001', 'Huguinho Pato', '51985744566', 'Rua das Flores, 100', 'huguinho.pato@email.com');
 INSERT INTO clientes (cpf, nome, celular, endereco, email) VALUES ('9002', 'Luizinho Pato', '5199172079', 'Av. Central, 200', 'zezinho.pato@email.com');
@@ -66,3 +78,12 @@ INSERT INTO cardapio_produto (cardapio_id,produto_id) VALUES (1,3);
 
 INSERT INTO cardapio_produto (cardapio_id,produto_id) VALUES (2,1);
 INSERT INTO cardapio_produto (cardapio_id,produto_id) VALUES (2,3);
+
+-- Inserção de usuários simples
+INSERT INTO usuarios (id, username, password, tipo) VALUES (1, 'admin', '123456', 'ADMIN');
+INSERT INTO usuarios (id, username, password, tipo) VALUES (2, 'usuario', '123456', 'USUARIO');
+
+-- Pedido de exemplo para testes de status
+INSERT INTO pedidos (id,cliente_cpf,status) VALUES (1,'9001','NOVO');
+INSERT INTO pedidos (id,cliente_cpf,status) VALUES (2,'9002','APROVADO');
+INSERT INTO pedidos (id,cliente_cpf,status) VALUES (3,'9001','PAGO');

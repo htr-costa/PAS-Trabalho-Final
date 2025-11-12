@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import jakarta.servlet.http.HttpSession;
 
 import com.pasfinal.Adaptadores.Apresentacao.Presenters.CabecalhoCardapioPresenter;
 import com.pasfinal.Adaptadores.Apresentacao.Presenters.CardapioPresenter;
@@ -17,6 +19,8 @@ import com.pasfinal.Aplicacao.RecuperarCardapioUC;
 import com.pasfinal.Aplicacao.Responses.CardapioResponse;
 import org.springframework.beans.factory.annotation.Value;
 import com.pasfinal.Dominio.Entidades.Produto;
+import com.pasfinal.Dominio.Entidades.Usuario;
+import org.springframework.http.HttpStatus;
 
 @RestController
 @RequestMapping("/cardapio")
@@ -34,7 +38,13 @@ public class CardapioController {
 
     @GetMapping("/{id}")
     @CrossOrigin("*")
-    public CardapioPresenter recuperaCardapio(@PathVariable(value="id")long id){
+    public ResponseEntity<?> recuperaCardapio(@PathVariable(value="id")long id, HttpSession session){
+        Usuario usuario = (Usuario) session.getAttribute("usuario");
+        if (usuario == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body("Usuário não autenticado. Faça login para acessar o cardápio.");
+        }
+        
         CardapioResponse cardapioResponse = recuperaCardapioUC.run(id);
         Set<Long> conjIdSugestoes = new HashSet<>(cardapioResponse.getSugestoesDoChef().stream()
             .map(produto->produto.getId())
@@ -44,7 +54,7 @@ public class CardapioController {
             boolean sugestao = conjIdSugestoes.contains(produto.getId());
             cardapioPresenter.insereItem(produto.getId(), produto.getDescricao(), produto.getPreco(), sugestao);
         }
-        return cardapioPresenter;
+        return ResponseEntity.ok(cardapioPresenter);
     }
 
     @GetMapping("/lista")
@@ -59,8 +69,13 @@ public class CardapioController {
     
     @GetMapping
     @CrossOrigin("*")
-    public CardapioPresenter recuperaCardapioAtual() {
-        // retorna o cardápio corrente definido na configuração (application.yaml)
-        return recuperaCardapio(currentCardapioId);
+    public ResponseEntity<?> recuperaCardapioAtual(HttpSession session) {
+        Usuario usuario = (Usuario) session.getAttribute("usuario");
+        if (usuario == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body("Usuário não autenticado. Faça login para acessar o cardápio.");
+        }
+        
+        return recuperaCardapio(currentCardapioId, session);
     }
 }

@@ -2,6 +2,8 @@ package com.pasfinal.Adaptadores.Dados;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -27,24 +29,98 @@ public class PedidoRepositoryJDBC implements PedidoRepository {
             long id = rs.getLong("id");
             String status = rs.getString("status");
             Pedido.Status st = Pedido.Status.valueOf(status);
-            // Para simplificar, não carregamos cliente nem itens agora
+            String enderecoEntrega = rs.getString("endereco_entrega");
+            
+            Timestamp tsDataHoraPedido = rs.getTimestamp("data_hora_pedido");
+            LocalDateTime dataHoraPedido = tsDataHoraPedido != null ? tsDataHoraPedido.toLocalDateTime() : null;
+            
+            Timestamp tsDataHoraPagamento = rs.getTimestamp("data_hora_pagamento");
+            LocalDateTime dataHoraPagamento = tsDataHoraPagamento != null ? tsDataHoraPagamento.toLocalDateTime() : null;
+            
+            double valor = rs.getDouble("valor");
+            double impostos = rs.getDouble("impostos");
+            double desconto = rs.getDouble("desconto");
+            double valorCobrado = rs.getDouble("valor_cobrado");
+            
+            // Para simplificar, não carregamos itens agora
             return new Pedido(id, new Cliente(rs.getString("cliente_cpf"), "", "", "", ""), 
-                (LocalDateTime)null, List.of(), st, 0,0,0,0);
+                enderecoEntrega, dataHoraPedido, dataHoraPagamento, 
+                List.of(), st, valor, impostos, desconto, valorCobrado);
         }
     };
 
     @Override
     public Pedido recuperaPorId(long id) {
-        List<Pedido> lst = jdbcTemplate.query("select id, cliente_cpf, status from pedidos where id=?", mapperPedidoBasico, id);
+        List<Pedido> lst = jdbcTemplate.query(
+            "SELECT id, cliente_cpf, endereco_entrega, data_hora_pedido, data_hora_pagamento, status, valor, impostos, desconto, valor_cobrado FROM pedidos WHERE id=?", 
+            mapperPedidoBasico, id);
         if(lst.isEmpty()) return null;
         return lst.get(0);
     }
 
     @Override
     public void salva(Pedido pedido) {
-        int updated = jdbcTemplate.update("update pedidos set status=? where id=?", pedido.getStatus().name(), pedido.getId());
-        if(updated==0){
-            jdbcTemplate.update("insert into pedidos(id,cliente_cpf,status) values(?,?,?)", pedido.getId(), pedido.getCliente().getCpf(), pedido.getStatus().name());
+        int updated = jdbcTemplate.update(
+            "UPDATE pedidos SET status=?, endereco_entrega=?, data_hora_pedido=?, data_hora_pagamento=?, valor=?, impostos=?, desconto=?, valor_cobrado=? WHERE id=?", 
+            pedido.getStatus().name(), 
+            pedido.getEnderecoEntrega(),
+            pedido.getDataHoraPedido(),
+            pedido.getDataHoraPagamento(),
+            pedido.getValor(),
+            pedido.getImpostos(),
+            pedido.getDesconto(),
+            pedido.getValorCobrado(),
+            pedido.getId());
+        
+        if(updated == 0){
+            jdbcTemplate.update(
+                "INSERT INTO pedidos(id, cliente_cpf, endereco_entrega, data_hora_pedido, data_hora_pagamento, status, valor, impostos, desconto, valor_cobrado) VALUES(?,?,?,?,?,?,?,?,?,?)", 
+                pedido.getId(), 
+                pedido.getCliente().getCpf(), 
+                pedido.getEnderecoEntrega(),
+                pedido.getDataHoraPedido(),
+                pedido.getDataHoraPagamento(),
+                pedido.getStatus().name(),
+                pedido.getValor(),
+                pedido.getImpostos(),
+                pedido.getDesconto(),
+                pedido.getValorCobrado());
         }
+    }
+
+    @Override
+    public int contarPedidosClienteApos(String cpfCliente, LocalDateTime dataLimite) {
+        List<Integer> resultado = jdbcTemplate.query(
+            "SELECT COUNT(*) as total FROM pedidos WHERE cliente_cpf=? AND data_hora_pedido >= ?",
+            (rs, rowNum) -> rs.getInt("total"),
+            cpfCliente,
+            dataLimite);
+        
+        return resultado.isEmpty() ? 0 : resultado.get(0);
+    }
+
+    @Override
+    public List<Pedido> listarPedidosEntreguesEntreDatas(LocalDate dataInicio, LocalDate dataFim) {
+        return jdbcTemplate.query(
+            "SELECT id, cliente_cpf, endereco_entrega, data_hora_pedido, data_hora_pagamento, status, valor, impostos, desconto, valor_cobrado " +
+            "FROM pedidos " +
+            "WHERE status = 'ENTREGUE' AND CAST(data_hora_pedido AS DATE) >= ? AND CAST(data_hora_pedido AS DATE) <= ? " +
+            "ORDER BY data_hora_pedido DESC",
+            mapperPedidoBasico,
+            dataInicio,
+            dataFim);
+    }
+
+    @Override
+    public List<Pedido> listarPedidosClienteEntreguesEntreDatas(String clienteCpf, LocalDate dataInicio, LocalDate dataFim) {
+        return jdbcTemplate.query(
+            "SELECT id, cliente_cpf, endereco_entrega, data_hora_pedido, data_hora_pagamento, status, valor, impostos, desconto, valor_cobrado " +
+            "FROM pedidos " +
+            "WHERE cliente_cpf = ? AND status = 'ENTREGUE' AND CAST(data_hora_pedido AS DATE) >= ? AND CAST(data_hora_pedido AS DATE) <= ? " +
+            "ORDER BY data_hora_pedido DESC",
+            mapperPedidoBasico,
+            clienteCpf,
+            dataInicio,
+            dataFim);
     }
 }
