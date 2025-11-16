@@ -1,0 +1,29 @@
+server:
+  port: 8765
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          lower-case-service-id: true
+      routes:
+        - id: telepizza-cardapio
+          uri: lb://telepizza
+          predicates:
+            - Path=/cardapio/**
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: https://glowing-system-g47qpg97q5wjh9744-8761.app.github.dev//eureka
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      enabled: true

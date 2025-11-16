@@ -1,4 +1,6 @@
 spring:
+  application:
+    name: telepizza
   datasource:
     url: jdbc:h2:mem:pizzadb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     driver-class-name: org.h2.Driver
@@ -21,7 +23,20 @@ logging:
     com:
       bcopstein: DEBUG
 application:
-  name: ex4-lancheriaddd-v1
   currentCardapioId: 1
 server:
   port: 8080
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: https://glowing-system-g47qpg97q5wjh9744-8761.app.github.dev/eureka
+  instance:
+    prefer-ip-address: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
