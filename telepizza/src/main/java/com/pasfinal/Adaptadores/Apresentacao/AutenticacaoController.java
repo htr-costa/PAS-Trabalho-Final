@@ -25,6 +25,39 @@ public class AutenticacaoController {
         this.clienteRepository = clienteRepository;
     }
 
+    /**
+     * ENDPOINT INTERNO - Chamado apenas pelo Gateway
+     * Valida credenciais e retorna dados do usuário (incluindo CPF)
+     */
+    @PostMapping("/validate")
+    public ResponseEntity<?> validateCredentials(@RequestBody Map<String, String> credentials) {
+        String usuario = credentials.get("usuario");
+        String senha = credentials.get("senha");
+
+        Optional<Usuario> usuarioOpt = autenticacaoService.login(usuario, senha);
+
+        if (usuarioOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Credenciais inválidas"));
+        }
+
+        Usuario usuarioEntity = usuarioOpt.get();
+        
+        // Busca o CPF do cliente pelo email
+        Cliente cliente = clienteRepository.recuperaPorEmail(usuario);
+        String cpf = cliente != null ? cliente.getCpf() : "00000000000";
+
+        // Retorna os dados necessários para o Gateway gerar o token
+        return ResponseEntity.ok(Map.of(
+            "usuario", usuarioEntity.getUsername(),
+            "tipo", usuarioEntity.getTipo(),
+            "cpf", cpf
+        ));
+    }
+
+    /**
+     * ENDPOINT LEGADO - Mantido para compatibilidade
+     * Pode ser removido após migração completa para JWT
+     */
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> credentials, HttpSession session) {
         String username = credentials.get("username");
@@ -110,6 +143,79 @@ public class AutenticacaoController {
                     "email", email,
                     "cpf", cpf,
                     "nome", nome
+                ));
+    }
+
+    /**
+     * ENDPOINT INTERNO - Chamado apenas pelo Gateway
+     * Registra novo usuário e cliente, retorna dados para o Gateway gerar token
+     */
+    @PostMapping("/internal-register")
+    public ResponseEntity<?> registerInternal(@RequestBody Map<String, String> body) {
+        String usuario = body.get("usuario");
+        String senha = body.get("senha");
+        String cpf = body.get("cpf");
+        String nome = body.get("nome");
+        String telefone = body.get("telefone");
+        String endereco = body.get("endereco");
+
+        // Validações
+        if (usuario == null || usuario.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Usuario é obrigatório"));
+        }
+        if (senha == null || senha.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Senha é obrigatória"));
+        }
+        if (cpf == null || cpf.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "CPF é obrigatório"));
+        }
+        if (nome == null || nome.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Nome é obrigatório"));
+        }
+        if (telefone == null || telefone.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Telefone é obrigatório"));
+        }
+        if (endereco == null || endereco.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Endereço é obrigatório"));
+        }
+
+        // Verifica se CPF já existe
+        try {
+            Cliente clienteExistente = clienteRepository.recuperaPorCpf(cpf);
+            if (clienteExistente != null) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("error", "CPF já cadastrado"));
+            }
+        } catch (Exception e) {
+        }
+
+        // Cria usuário
+        Usuario usuarioEntity = new Usuario();
+        usuarioEntity.setUsername(usuario);
+        usuarioEntity.setPassword(senha);
+        usuarioEntity.setTipo("USUARIO");
+
+        boolean ok = autenticacaoService.registra(usuarioEntity);
+        if (!ok) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("error", "Usuario já cadastrado"));
+        }
+
+        // Cria cliente
+        try {
+            Cliente cliente = new Cliente(cpf, nome, telefone, endereco, usuario);
+            clienteRepository.salva(cliente);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "Erro ao cadastrar cliente: " + e.getMessage()));
+        }
+
+        // Retorna dados para o Gateway gerar o token
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(Map.of(
+                    "usuario", usuario,
+                    "cpf", cpf,
+                    "tipo", "USUARIO"
                 ));
     }
 
