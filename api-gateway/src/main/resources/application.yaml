@@ -16,7 +16,7 @@ spring:
 eureka:
   client:
     serviceUrl:
-      defaultZone: https://glowing-system-g47qpg97q5wjh9744-8761.app.github.dev//eureka
+      defaultZone: http://naming-server:8761/eureka
 management:
   endpoints:
     web:
