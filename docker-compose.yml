@@ -1,0 +1,32 @@
+services:
+  api-gateway:
+    build: api-gateway
+    image: gateway
+    ports:
+      - "8765:8765"
+    networks:
+      - microservices-network
+    depends_on:
+      - naming-server
+    environment:
+      - eureka.client.serviceUrl.defaultZone=http://naming-server:8761/eureka
+  naming-server:
+    build: naming-server
+    image: nameserver
+    ports:
+      - "8761:8761"
+    networks:
+      - microservices-network
+  telepizza:
+    build: telepizza
+    image: telepizza
+    ports:
+      - "8080:8080"
+    networks:
+      - microservices-network
+    depends_on:
+      - naming-server
+    environment:
+      - eureka.client.serviceUrl.defaultZone=http://naming-server:8761/eureka
+networks:
+  microservices-network:
