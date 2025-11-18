@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 import com.pasfinal.Aplicacao.ListarPedidosEntreguesUC;
 import com.pasfinal.Aplicacao.ListarPedidosClienteEntreguesUC;
@@ -29,9 +30,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import com.pasfinal.Aplicacao.Requests.SubmeterPedidoRequest;
 import com.pasfinal.Aplicacao.Responses.SubmeterPedidoResponse;
 import com.pasfinal.Aplicacao.SubmeterPedidoUC;
-import com.pasfinal.Dominio.Entidades.Usuario;
-
-import jakarta.servlet.http.HttpSession;
 
 @RestController
 @RequestMapping("/pedidos")
@@ -55,14 +53,16 @@ public class PedidoController {
         this.listarPedidosClienteEntreguesUC = listarPedidosClienteEntreguesUC;
     }
 
+    /**
+     * Recupera status do pedido
+     * 
+     * Headers do Gateway: X-User-Email, X-User-Type, X-User-CPF
+     */
     @GetMapping("/{id}/status")
     @CrossOrigin("*")
-    public ResponseEntity<StatusPedidoResponse> recuperaStatus(@PathVariable("id") long id, HttpSession session){
-        Usuario usuario = (Usuario) session.getAttribute("usuario");
-        if (usuario == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(new StatusPedidoResponse(id, "NAO_AUTORIZADO", "Usuário não autenticado. Faça login para consultar o status do pedido."));
-        }
+    public ResponseEntity<StatusPedidoResponse> recuperaStatus(
+            @PathVariable("id") long id,
+            @RequestHeader(value = "X-User-Email", required = false) String userEmail){
         
         Pedido.Status st = recuperarStatusUC.run(id);
         if(st==null) {
@@ -72,14 +72,14 @@ public class PedidoController {
         return ResponseEntity.ok(body);
     }
 
+    /**
+     * Processa pagamento do pedido
+     */
     @PostMapping("/{id}/pagamento")
     @CrossOrigin("*")
-    public ResponseEntity<StatusPedidoResponse> pagarPedido(@PathVariable("id") long id, HttpSession session){
-        Usuario usuario = (Usuario) session.getAttribute("usuario");
-        if (usuario == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(new StatusPedidoResponse(id, "NAO_AUTORIZADO", "Usuário não autenticado. Faça login para pagar o pedido."));
-        }
+    public ResponseEntity<StatusPedidoResponse> pagarPedido(
+            @PathVariable("id") long id,
+            @RequestHeader(value = "X-User-Email", required = false) String userEmail){
         
         boolean sucesso = pagarPedidoUC.run(id);
         if(!sucesso) {
@@ -107,14 +107,14 @@ public class PedidoController {
         }
     }
 
+    /**
+     * Cancela pedido
+     */
     @PostMapping("/{id}/cancelamento")
     @CrossOrigin("*")
-    public ResponseEntity<StatusPedidoResponse> cancela(@PathVariable("id") long id, HttpSession session){
-        Usuario usuario = (Usuario) session.getAttribute("usuario");
-        if (usuario == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(new StatusPedidoResponse(id, "NAO_AUTORIZADO", "Usuário não autenticados."));
-        }
+    public ResponseEntity<StatusPedidoResponse> cancela(
+            @PathVariable("id") long id,
+            @RequestHeader(value = "X-User-Email", required = false) String userEmail){
         
         boolean ok = cancelarPedidoUC.run(id);
         if(!ok){
@@ -129,18 +129,20 @@ public class PedidoController {
         return ResponseEntity.ok(new StatusPedidoResponse(id, Pedido.Status.CANCELADO.name(), "Pedido cancelado"));
     }
     
+    /**
+     * Submete novo pedido
+     * 
+     * Usa o email do header para recuperar dados do cliente
+     */
     @PostMapping
     @CrossOrigin("*")
-    public ResponseEntity<SubmeterPedidoResponse> submeterPedido(@RequestBody SubmeterPedidoRequest req, HttpSession session) {
-        Usuario usuario = (Usuario) session.getAttribute("usuario");
-        if (usuario == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(new SubmeterPedidoResponse(0, "NAO_AUTORIZADO", 0, 0, 0, 0, null, List.of()));
-        }
+    public ResponseEntity<SubmeterPedidoResponse> submeterPedido(
+            @RequestBody SubmeterPedidoRequest req,
+            @RequestHeader("X-User-Email") String userEmail) {
         
         try {
-            // Passa o email do usuário autenticado para recuperar dados do cliente
-            SubmeterPedidoResponse resp = submeterPedidoUC.run(req, usuario.getUsername());
+            // Passa o email do header (vem do token JWT validado pelo Gateway)
+            SubmeterPedidoResponse resp = submeterPedidoUC.run(req, userEmail);
             if ("NEGADO".equals(resp.getStatus())) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
             }

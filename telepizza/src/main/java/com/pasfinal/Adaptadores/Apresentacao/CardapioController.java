@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.http.ResponseEntity;
-import jakarta.servlet.http.HttpSession;
 
 import com.pasfinal.Adaptadores.Apresentacao.Presenters.CabecalhoCardapioPresenter;
 import com.pasfinal.Adaptadores.Apresentacao.Presenters.CardapioPresenter;
@@ -19,8 +19,6 @@ import com.pasfinal.Aplicacao.RecuperarCardapioUC;
 import com.pasfinal.Aplicacao.Responses.CardapioResponse;
 import org.springframework.beans.factory.annotation.Value;
 import com.pasfinal.Dominio.Entidades.Produto;
-import com.pasfinal.Dominio.Entidades.Usuario;
-import org.springframework.http.HttpStatus;
 
 @RestController
 @RequestMapping("/cardapio")
@@ -36,13 +34,26 @@ public class CardapioController {
         this.recuperaListaCardapioUC = recuperaListaCardapioUC;
     }
 
+    /**
+     * Recupera cardápio por ID
+     * 
+     * Headers enviados pelo Gateway (após validação JWT):
+     * - X-User-Email: email do usuário autenticado
+     * - X-User-Type: tipo do usuário (USUARIO ou ADMIN)
+     * - X-User-CPF: CPF do cliente
+     * 
+     * Se a requisição chegou até aqui, o Gateway já validou a autenticação.
+     */
     @GetMapping("/{id}")
     @CrossOrigin("*")
-    public ResponseEntity<?> recuperaCardapio(@PathVariable(value="id")long id, HttpSession session){
-        Usuario usuario = (Usuario) session.getAttribute("usuario");
-        if (usuario == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body("Usuário não autenticado. Faça login para acessar o cardápio.");
+    public ResponseEntity<?> recuperaCardapio(
+            @PathVariable(value="id") long id,
+            @RequestHeader(value = "X-User-Email", required = false) String userEmail){
+        
+        // Se o header não existe, significa que passou direto sem o Gateway
+        // (útil para testes locais ou endpoints públicos futuros)
+        if (userEmail == null) {
+            userEmail = "anonymous";
         }
         
         CardapioResponse cardapioResponse = recuperaCardapioUC.run(id);
@@ -67,15 +78,14 @@ public class CardapioController {
          return lstCardapios;
     }
     
+    /**
+     * Recupera o cardápio atual (configurado em application.yaml)
+     */
     @GetMapping
     @CrossOrigin("*")
-    public ResponseEntity<?> recuperaCardapioAtual(HttpSession session) {
-        Usuario usuario = (Usuario) session.getAttribute("usuario");
-        if (usuario == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body("Usuário não autenticado. Faça login para acessar o cardápio.");
-        }
+    public ResponseEntity<?> recuperaCardapioAtual(
+            @RequestHeader(value = "X-User-Email", required = false) String userEmail) {
         
-        return recuperaCardapio(currentCardapioId, session);
+        return recuperaCardapio(currentCardapioId, userEmail);
     }
 }
