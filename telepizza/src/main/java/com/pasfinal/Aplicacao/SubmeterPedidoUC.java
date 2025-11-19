@@ -19,6 +19,7 @@ import com.pasfinal.Dominio.Entidades.Pedido;
 import com.pasfinal.Dominio.Entidades.Produto;
 import com.pasfinal.Dominio.Servicos.DescontosService;
 import com.pasfinal.Dominio.Servicos.ImpostosService;
+import com.pasfinal.Adaptadores.Servicos.DeliveryProducerService;
 
 @Component
 public class SubmeterPedidoUC {
@@ -28,28 +29,29 @@ public class SubmeterPedidoUC {
     private final ClienteRepository clienteRepo;
     private final ImpostosService impostosService;
     private final DescontosService descontosService;
+    private final DeliveryProducerService deliveryProducer;
 
     public SubmeterPedidoUC(ProdutosRepository produtosRepo, EstoqueRepository estoqueRepo, 
             PedidoRepository pedidoRepo, ClienteRepository clienteRepo,
-            ImpostosService impostosService, DescontosService descontosService) {
+            ImpostosService impostosService, DescontosService descontosService,
+            DeliveryProducerService deliveryProducer) {
         this.produtosRepo = produtosRepo;
         this.estoqueRepo = estoqueRepo;
         this.pedidoRepo = pedidoRepo;
         this.clienteRepo = clienteRepo;
         this.impostosService = impostosService;
         this.descontosService = descontosService;
+        this.deliveryProducer = deliveryProducer;
     }
 
     public SubmeterPedidoResponse run(SubmeterPedidoRequest req, String emailUsuario) {
         long id = req.getId();
         
-        // verifica se já existe pedido com este ID
         Pedido pedidoExistente = pedidoRepo.recuperaPorId(id);
         if (pedidoExistente != null) {
             throw new IllegalArgumentException("Já existe um pedido com o ID " + id);
         }
         
-        // recupera o cliente pelo email do usuário autenticado
         Cliente cliente = clienteRepo.recuperaPorEmail(emailUsuario);
         if (cliente == null) {
             throw new IllegalArgumentException("Cliente não encontrado para o email: " + emailUsuario);
@@ -62,20 +64,19 @@ public class SubmeterPedidoUC {
         double valor = 0;
         List<Long> itensIndisponiveis = new ArrayList<>();
         
-        // cria pedido com status NOVO usando o cliente real do banco
         Pedido pedidoNovo = new Pedido(id, cliente, enderecoEntrega, LocalDateTime.now(), 
                 null, List.of(), Pedido.Status.NOVO, 0, 0, 0, 0);
         pedidoRepo.salva(pedidoNovo);
         
-        // verifica disponibilidade de cada item
         for (ItemPedidoRequest ipr : req.getItens()) {
             Produto p = produtosRepo.recuperaProdutoPorid(ipr.getProdutoId());
             if (p == null) {
                 itensIndisponiveis.add(ipr.getProdutoId());
                 continue;
             }
+
             boolean disponivel = true;
-            // verifica cada ingrediente da receita
+
             for (var ing : p.getReceita().getIngredientes()) {
                 int estoque = estoqueRepo.recuperaQuantidade(ing.getId());
                 if (estoque < ipr.getQuantidade()) {
@@ -91,7 +92,6 @@ public class SubmeterPedidoUC {
             valor += p.getPreco() * ipr.getQuantidade();
         }
         
-        // se itens indisponíveis, retorna pedido negado
         if (!itensIndisponiveis.isEmpty()) {
             return SubmeterPedidoResponse.pedidoNegado(req.getId(), itensIndisponiveis);
         }
@@ -100,10 +100,27 @@ public class SubmeterPedidoUC {
         double impostos = impostosService.calcularImpostos(valor);
         double valorCobrado = valor - desconto + impostos;
         
-        // atualiza para APROVADO com valores calculados
         Pedido pedidoAprovado = new Pedido(id, cliente, enderecoEntrega, LocalDateTime.now(), 
                 null, itens, Pedido.Status.APROVADO, valor, impostos, desconto, valorCobrado);
         pedidoRepo.salva(pedidoAprovado);
+        
+        try {
+            List<String> nomesItens = new ArrayList<>();
+            for (ItemPedido item : itens) {
+                nomesItens.add(item.getItem().getDescricao() + " (x" + item.getQuantidade() + ")");
+            }
+            
+            deliveryProducer.enviarPedidoParaEntrega(
+                id, 
+                cliente.getNome(), 
+                enderecoEntrega, 
+                nomesItens, 
+                valorCobrado
+            );
+        } catch (Exception e) {
+            // Log do erro mas NÃO falha o pedido
+            System.err.println("Erro ao enviar pedido para fila de entrega: " + e.getMessage());
+        }
         
         return SubmeterPedidoResponse.pedidoAprovado(id, valor, impostos, desconto, valorCobrado, enderecoEntrega);
     }
