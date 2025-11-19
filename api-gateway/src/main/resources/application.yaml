@@ -9,35 +9,19 @@ spring:
         locator:
           lower-case-service-id: true
       routes:
-        # Rotas de autenticação - processadas pelo AuthController do Gateway
-        - id: auth-login
-          uri: no://op  # Não roteia para nenhum serviço (processado localmente)
-          predicates:
-            - Path=/auth/login
-          filters:
-            - name: RewritePath
-              args:
-                regexp: /auth/login
-                replacement: /auth/login
-        
-        - id: auth-register
-          uri: no://op
-          predicates:
-            - Path=/auth/register
-        
         # Rotas internas do telepizza - apenas Gateway pode chamar
         - id: telepizza-auth-internal
           uri: lb://telepizza
           predicates:
-            - Path=/auth/validate, /auth/register-internal
+            - Path=/auth/validate, /auth/internal-register
         
-        # Rota para cardápios - requer autenticação (filtro valida JWT)
+        # Rota para cardápios - PÚBLICA (não requer autenticação)
         - id: telepizza-cardapio
           uri: lb://telepizza
           predicates:
             - Path=/cardapio/**
         
-        # Rota para pedidos - requer autenticação
+        # Rota para pedidos - requer autenticação (filtro valida JWT)
         - id: telepizza-pedidos
           uri: lb://telepizza
           predicates:
