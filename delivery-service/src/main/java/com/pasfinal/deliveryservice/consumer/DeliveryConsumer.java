@@ -1,4 +1,4 @@
-package main.java.com.pasfinal.deliveryservice.consumer;
+package com.pasfinal.deliveryservice.consumer;
 
 import com.pasfinal.deliveryservice.dto.DeliveryRequest;
 import com.pasfinal.deliveryservice.service.DeliveryService;
@@ -16,7 +16,7 @@ public class DeliveryConsumer {
     @Autowired
     private DeliveryService deliveryService;
     
-    @RabbitListener(queues = "#{rabbitMQConfig.getQueueName()}")
+    @RabbitListener(queues = "#{@getQueueName}")
     public void receiveDeliveryRequest(DeliveryRequest request) {
         logger.info("╔════════════════════════════════════════╗");
         logger.info("║  MENSAGEM RECEBIDA DA FILA RABBITMQ   ║");

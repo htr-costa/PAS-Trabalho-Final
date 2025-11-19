@@ -1,4 +1,4 @@
-package main.java.com.pasfinal.deliveryservice.model;
+package com.pasfinal.deliveryservice.model;
 
 import java.time.LocalDateTime;
 

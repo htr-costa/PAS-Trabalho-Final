@@ -1,4 +1,4 @@
-package main.java.com.pasfinal.deliveryservice.service;
+package com.pasfinal.deliveryservice.service;
 
 import com.pasfinal.deliveryservice.dto.DeliveryRequest;
 import com.pasfinal.deliveryservice.model.Delivery;

@@ -1,4 +1,4 @@
-package main.java.com.pasfinal.deliveryservice.config;
+package com.pasfinal.deliveryservice.config;
 
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
@@ -43,7 +43,11 @@ public class RabbitMQConfig {
 
     @Bean
     public MessageConverter jsonMessageConverter() {
-        return new Jackson2JsonMessageConverter();
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        // keep timestamps as arrays/numbers if producers use them
+        mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, true);
+        return new Jackson2JsonMessageConverter(mapper);
     }
 
     @Bean

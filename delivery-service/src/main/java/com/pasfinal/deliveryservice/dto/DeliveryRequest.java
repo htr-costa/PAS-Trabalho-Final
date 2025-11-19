@@ -1,4 +1,4 @@
-package main.java.com.pasfinal.deliveryservice.dto;
+package com.pasfinal.deliveryservice.dto;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
