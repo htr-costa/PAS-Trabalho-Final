@@ -17,8 +17,8 @@ public class RabbitMQConfig {
 
     public static final String DELIVERY_EXCHANGE = "telepizza.delivery.exchange";
     
-    private static final String QUEUE_NAME = "telepizza.delivery.queue.instance-" + 
-                                             (int)(Math.random() * 10000);
+    // Fila única para garantir distribuição de carga entre as instâncias (Round Robin)
+    private static final String QUEUE_NAME = "telepizza.delivery.queue";
 
     @Bean
     public String getQueueName() {

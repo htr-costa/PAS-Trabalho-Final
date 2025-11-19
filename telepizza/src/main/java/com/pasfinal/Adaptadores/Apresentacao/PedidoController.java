@@ -31,6 +31,9 @@ import com.pasfinal.Aplicacao.Requests.SubmeterPedidoRequest;
 import com.pasfinal.Aplicacao.Responses.SubmeterPedidoResponse;
 import com.pasfinal.Aplicacao.SubmeterPedidoUC;
 
+import com.pasfinal.Aplicacao.AtualizarStatusPedidoUC;
+import com.pasfinal.Aplicacao.Requests.AtualizarStatusRequest;
+
 @RestController
 @RequestMapping("/pedidos")
 public class PedidoController {
@@ -40,17 +43,20 @@ public class PedidoController {
     private CancelarPedidoUC cancelarPedidoUC;
     private ListarPedidosEntreguesUC listarPedidosEntreguesUC;
     private ListarPedidosClienteEntreguesUC listarPedidosClienteEntreguesUC;
+    private AtualizarStatusPedidoUC atualizarStatusUC;
 
     public PedidoController(RecuperarStatusPedidoUC recuperarStatusUC, PagarPedidoUC pagarPedidoUC, 
             SubmeterPedidoUC submeterPedidoUC, CancelarPedidoUC cancelarPedidoUC,
             ListarPedidosEntreguesUC listarPedidosEntreguesUC,
-            ListarPedidosClienteEntreguesUC listarPedidosClienteEntreguesUC){
+            ListarPedidosClienteEntreguesUC listarPedidosClienteEntreguesUC,
+            AtualizarStatusPedidoUC atualizarStatusUC){
         this.recuperarStatusUC = recuperarStatusUC;
         this.pagarPedidoUC = pagarPedidoUC;
         this.submeterPedidoUC = submeterPedidoUC;
         this.cancelarPedidoUC = cancelarPedidoUC;
         this.listarPedidosEntreguesUC = listarPedidosEntreguesUC;
         this.listarPedidosClienteEntreguesUC = listarPedidosClienteEntreguesUC;
+        this.atualizarStatusUC = atualizarStatusUC;
     }
 
     /**
@@ -179,6 +185,26 @@ public class PedidoController {
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+    }
+
+    /**
+     * Atualiza status do pedido
+     */
+    @org.springframework.web.bind.annotation.PutMapping("/{id}/status")
+    @CrossOrigin("*")
+    public ResponseEntity<Void> atualizarStatus(
+            @PathVariable("id") long id,
+            @RequestBody AtualizarStatusRequest req) {
+        try {
+            Pedido.Status novoStatus = Pedido.Status.valueOf(req.getStatus());
+            boolean sucesso = atualizarStatusUC.run(id, novoStatus);
+            if (!sucesso) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
         }
     }
 }

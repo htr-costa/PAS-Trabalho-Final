@@ -19,7 +19,6 @@ import com.pasfinal.Dominio.Entidades.Pedido;
 import com.pasfinal.Dominio.Entidades.Produto;
 import com.pasfinal.Dominio.Servicos.DescontosService;
 import com.pasfinal.Dominio.Servicos.ImpostosService;
-import com.pasfinal.Adaptadores.Servicos.DeliveryProducerService;
 
 @Component
 public class SubmeterPedidoUC {
@@ -29,19 +28,16 @@ public class SubmeterPedidoUC {
     private final ClienteRepository clienteRepo;
     private final ImpostosService impostosService;
     private final DescontosService descontosService;
-    private final DeliveryProducerService deliveryProducer;
 
     public SubmeterPedidoUC(ProdutosRepository produtosRepo, EstoqueRepository estoqueRepo, 
             PedidoRepository pedidoRepo, ClienteRepository clienteRepo,
-            ImpostosService impostosService, DescontosService descontosService,
-            DeliveryProducerService deliveryProducer) {
+            ImpostosService impostosService, DescontosService descontosService) {
         this.produtosRepo = produtosRepo;
         this.estoqueRepo = estoqueRepo;
         this.pedidoRepo = pedidoRepo;
         this.clienteRepo = clienteRepo;
         this.impostosService = impostosService;
         this.descontosService = descontosService;
-        this.deliveryProducer = deliveryProducer;
     }
 
     public SubmeterPedidoResponse run(SubmeterPedidoRequest req, String emailUsuario) {
@@ -103,24 +99,6 @@ public class SubmeterPedidoUC {
         Pedido pedidoAprovado = new Pedido(id, cliente, enderecoEntrega, LocalDateTime.now(), 
                 null, itens, Pedido.Status.APROVADO, valor, impostos, desconto, valorCobrado);
         pedidoRepo.salva(pedidoAprovado);
-        
-        try {
-            List<String> nomesItens = new ArrayList<>();
-            for (ItemPedido item : itens) {
-                nomesItens.add(item.getItem().getDescricao() + " (x" + item.getQuantidade() + ")");
-            }
-            
-            deliveryProducer.enviarPedidoParaEntrega(
-                id, 
-                cliente.getNome(), 
-                enderecoEntrega, 
-                nomesItens, 
-                valorCobrado
-            );
-        } catch (Exception e) {
-            // Log do erro mas NÃO falha o pedido
-            System.err.println("Erro ao enviar pedido para fila de entrega: " + e.getMessage());
-        }
         
         return SubmeterPedidoResponse.pedidoAprovado(id, valor, impostos, desconto, valorCobrado, enderecoEntrega);
     }
