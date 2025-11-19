@@ -31,6 +31,9 @@ application:
   currentCardapioId: 1
 server:
   port: 8080
+estoque:
+  microservice:
+    url: http://localhost:8081
 eureka:
   client:
     serviceUrl:

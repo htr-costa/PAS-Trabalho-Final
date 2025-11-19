@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import com.pasfinal.Aplicacao.Requests.ItemPedidoRequest;
 import com.pasfinal.Aplicacao.Requests.SubmeterPedidoRequest;
 import com.pasfinal.Aplicacao.Responses.SubmeterPedidoResponse;
+import com.pasfinal.Adaptadores.Servicos.EstoqueMicroserviceClient;
 import com.pasfinal.Dominio.Dados.ClienteRepository;
 import com.pasfinal.Dominio.Dados.PedidoRepository;
 import com.pasfinal.Dominio.Dados.ProdutosRepository;
@@ -28,16 +29,19 @@ public class SubmeterPedidoUC {
     private final ClienteRepository clienteRepo;
     private final ImpostosService impostosService;
     private final DescontosService descontosService;
+    private final EstoqueMicroserviceClient estoqueMicroserviceClient;
 
     public SubmeterPedidoUC(ProdutosRepository produtosRepo, EstoqueRepository estoqueRepo, 
             PedidoRepository pedidoRepo, ClienteRepository clienteRepo,
-            ImpostosService impostosService, DescontosService descontosService) {
+            ImpostosService impostosService, DescontosService descontosService,
+            EstoqueMicroserviceClient estoqueMicroserviceClient) {
         this.produtosRepo = produtosRepo;
         this.estoqueRepo = estoqueRepo;
         this.pedidoRepo = pedidoRepo;
         this.clienteRepo = clienteRepo;
         this.impostosService = impostosService;
         this.descontosService = descontosService;
+        this.estoqueMicroserviceClient = estoqueMicroserviceClient;
     }
 
     public SubmeterPedidoResponse run(SubmeterPedidoRequest req, String emailUsuario) {
@@ -90,6 +94,21 @@ public class SubmeterPedidoUC {
         
         if (!itensIndisponiveis.isEmpty()) {
             return SubmeterPedidoResponse.pedidoNegado(req.getId(), itensIndisponiveis);
+        }
+        
+        // dá baixa no estoque no microserviço para cada ingrediente usado
+        try {
+            for (ItemPedido item : itens) {
+                for (var ingrediente : item.getItem().getReceita().getIngredientes()) {
+                    estoqueMicroserviceClient.baixarEstoque(
+                        ingrediente.getId(), 
+                        item.getQuantidade()
+                    );
+                }
+            }
+        } catch (Exception e) {
+            // Se falhar ao dar baixa, retorna erro
+            throw new RuntimeException("Erro ao processar baixa no estoque: " + e.getMessage(), e);
         }
         
         double desconto = descontosService.calcularDesconto(cpf, valor);

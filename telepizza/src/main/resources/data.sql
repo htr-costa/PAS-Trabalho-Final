@@ -82,7 +82,7 @@ INSERT INTO cardapio_produto (cardapio_id,produto_id) VALUES (2,3);
 -- Inserção de usuários simples
 INSERT INTO usuarios (id, username, password, tipo) VALUES (1, 'admin', '123456', 'ADMIN');
 INSERT INTO usuarios (id, username, password, tipo) VALUES (2, 'usuario', '123456', 'USUARIO');
--- Usuários vinculados aos clientes existentes
+-- Usuários vinculados aos clientes (username = email do cliente)
 INSERT INTO usuarios (id, username, password, tipo) VALUES (3, 'huguinho.pato@email.com', '123456', 'USUARIO');
 INSERT INTO usuarios (id, username, password, tipo) VALUES (4, 'zezinho.pato@email.com', '123456', 'USUARIO');
 
