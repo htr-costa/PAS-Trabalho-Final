@@ -3,7 +3,6 @@ DELETE FROM pedidos; -- depende de clientes
 DELETE FROM cardapio_produto;
 DELETE FROM produto_receita;
 DELETE FROM receita_ingrediente;
-DELETE FROM itensEstoque; -- depende de ingredientes
 DELETE FROM produtos;
 DELETE FROM receitas;
 DELETE FROM cardapios;
@@ -24,17 +23,6 @@ INSERT INTO ingredientes (id, descricao) VALUES (6, 'Molho de tomate (200ml)');
 INSERT INTO ingredientes (id, descricao) VALUES (7, 'Porcao de azeitona');
 INSERT INTO ingredientes (id, descricao) VALUES (8, 'Porcao de oregano');
 INSERT INTO ingredientes (id, descricao) VALUES (9, 'Porcao de cebola');
-
--- Inserção dos itens de estoque
-INSERT INTO itensEstoque (id, quantidade, ingrediente_id) VALUES (1, 30, 1);
-INSERT INTO itensEstoque (id, quantidade, ingrediente_id) VALUES (2, 30, 2);
-INSERT INTO itensEstoque (id, quantidade, ingrediente_id) VALUES (3, 30, 3);
-INSERT INTO itensEstoque (id, quantidade, ingrediente_id) VALUES (4, 30, 4);
-INSERT INTO itensEstoque (id, quantidade, ingrediente_id) VALUES (5, 30, 5);
-INSERT INTO itensEstoque (id, quantidade, ingrediente_id) VALUES (6, 30, 6);
-INSERT INTO itensEstoque (id, quantidade, ingrediente_id) VALUES (7, 30, 7);
-INSERT INTO itensEstoque (id, quantidade, ingrediente_id) VALUES (8, 30, 8);
-INSERT INTO itensEstoque (id, quantidade, ingrediente_id) VALUES (9, 30, 9);
 
 -- Inserção das receitas 
 INSERT INTO receitas (id, titulo) VALUES (1, 'Pizza calabresa');

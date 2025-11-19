@@ -11,13 +11,6 @@ create table if not exists ingredientes (
   descricao varchar(255) not null
 );
 
-create table if not exists itensEstoque(
-    id bigint primary key,
-    quantidade int,
-    ingrediente_id bigint,
-    foreign key (ingrediente_id) references ingredientes(id)
-);
-
 -- Tabela Receita
 create table if not exists receitas (
   id bigint primary key,

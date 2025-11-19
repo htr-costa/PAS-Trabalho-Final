@@ -26,6 +26,14 @@ spring:
           uri: lb://telepizza
           predicates:
             - Path=/pedidos/**
+
+        # Rota para estoque - requer autenticação
+        - id: estoque-service
+          uri: lb://estoque-microservice
+          predicates:
+            - Path=/estoque/**
+          filters:
+            - RewritePath=/estoque(?<segment>/?.*), /api/estoque$\{segment}
         
         # Rota catch-all para telepizza
         - id: telepizza

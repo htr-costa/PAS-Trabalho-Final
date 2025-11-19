@@ -15,7 +15,6 @@ import com.pasfinal.Adaptadores.Servicos.AtualizarEstoqueRequest;
 import com.pasfinal.Dominio.Dados.ClienteRepository;
 import com.pasfinal.Dominio.Dados.PedidoRepository;
 import com.pasfinal.Dominio.Dados.ProdutosRepository;
-import com.pasfinal.Dominio.Dados.EstoqueRepository;
 import com.pasfinal.Dominio.Entidades.Cliente;
 import com.pasfinal.Dominio.Entidades.ItemPedido;
 import com.pasfinal.Dominio.Entidades.Pedido;
