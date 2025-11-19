@@ -3,19 +3,21 @@ FROM eclipse-temurin:21-jdk-alpine AS build
 
 WORKDIR /app
 
-# Copiar Maven Wrapper e arquivos de configuração
-COPY .mvn/ .mvn/
-COPY mvnw pom.xml ./
-COPY estoque-microservice/pom.xml estoque-microservice/
+# Copiar Maven Wrapper e arquivos de configuração do microserviço de estoque
+COPY estoque-microservice/.mvn/ .mvn/
+COPY estoque-microservice/mvnw estoque-microservice/pom.xml ./
+
+# Ajustar permissões do mvnw
+RUN sed -i 's/\r$//' mvnw && chmod +x mvnw
 
 # Baixar dependências
-RUN ./mvnw -f estoque-microservice/pom.xml dependency:go-offline
+RUN ./mvnw dependency:go-offline
 
 # Copiar código fonte
-COPY estoque-microservice/src estoque-microservice/src
+COPY estoque-microservice/src src
 
 # Compilar aplicação
-RUN ./mvnw -f estoque-microservice/pom.xml clean package -DskipTests
+RUN ./mvnw clean package -DskipTests
 
 # Estágio final - imagem mínima
 FROM eclipse-temurin:21-jre-alpine
@@ -26,7 +28,7 @@ WORKDIR /app
 RUN apk add --no-cache curl
 
 # Copiar JAR da aplicação
-COPY --from=build /app/estoque-microservice/target/*.jar app.jar
+COPY --from=build /app/target/*.jar app.jar
 
 # Expor porta
 EXPOSE 8081

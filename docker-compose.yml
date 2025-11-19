@@ -6,7 +6,7 @@ services:
       - "8761:8761"
     networks:
       - microservices-network
-  
+
   api-gateway:
     build: api-gateway
     image: gateway
@@ -18,7 +18,7 @@ services:
       - naming-server
     environment:
       - eureka.client.serviceUrl.defaultZone=http://naming-server:8761/eureka
-  
+
   estoque-service:
     build:
       context: .
@@ -37,7 +37,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 20s
-  
+
   telepizza:
     build: telepizza
     image: telepizza
