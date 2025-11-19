@@ -121,17 +121,27 @@ public class AuthController {
     public Mono<ResponseEntity<Map<String, String>>> register(@RequestBody Map<String, String> body) {
         WebClient webClient = webClientBuilder.build();
 
+        // Padroniza os campos para o formato esperado pelo telepizza
+        Map<String, String> telepizzaBody = Map.of(
+            "usuario", body.getOrDefault("email", body.getOrDefault("usuario", "")),
+            "senha", body.getOrDefault("password", body.getOrDefault("senha", "")),
+            "cpf", body.getOrDefault("cpf", ""),
+            "nome", body.getOrDefault("nome", ""),
+            "telefone", body.getOrDefault("celular", body.getOrDefault("telefone", "")),
+            "endereco", body.getOrDefault("endereco", "")
+        );
+
         // Encaminha para o telepizza criar o usuário e cliente
         return webClient.post()
                 .uri("lb://telepizza/auth/internal-register")
-                .bodyValue(body)
+                .bodyValue(telepizzaBody)
                 .retrieve()
                 .bodyToMono(Map.class)
                 .flatMap(response -> {
                     // Registro bem-sucedido, gera token
                     String usuario = (String) response.get("usuario");
                     String cpf = (String) response.get("cpf");
-                    String tipo = (String) response.get("tipo"); // Usa o tipo retornado
+                    String tipo = (String) response.get("tipo");
                     
                     String token = jwtUtil.generateToken(usuario, tipo, cpf);
                     

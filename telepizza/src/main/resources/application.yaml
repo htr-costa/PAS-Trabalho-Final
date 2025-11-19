@@ -15,6 +15,11 @@ spring:
     console:
       enabled: true
       path: /h2
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    username: guest
+    password: guest
 logging:
   level:
     org:

@@ -1,54 +1,41 @@
 package com.pasfinal.Dominio.Servicos;
 
-import java.util.Queue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.pasfinal.Adaptadores.Servicos.DeliveryProducerService;
 import com.pasfinal.Dominio.Dados.PedidoRepository;
+import com.pasfinal.Dominio.Entidades.ItemPedido;
 import com.pasfinal.Dominio.Entidades.Pedido;
 
 @Service
 public class EntregaService {
-    private Queue<Pedido> filaEntrega;
-    private Pedido emTransporte;
-
-    private ScheduledExecutorService scheduler;
     private PedidoRepository pedidoRepository;
+    private DeliveryProducerService deliveryProducer;
 
-    public EntregaService(PedidoRepository pedidoRepository) {
-        filaEntrega = new LinkedBlockingQueue<Pedido>();
-        emTransporte = null;
-        scheduler = Executors.newSingleThreadScheduledExecutor();
+    public EntregaService(PedidoRepository pedidoRepository, DeliveryProducerService deliveryProducer) {
         this.pedidoRepository = pedidoRepository;
-    }
-
-    private synchronized void colocaEmTransporte(Pedido pedido){
-        pedido.setStatus(Pedido.Status.TRANSPORTE);
-        pedidoRepository.salva(pedido);
-        emTransporte = pedido;
-        // Agenda pedidoEntregue para ser chamado em 5 segundos
-        scheduler.schedule(() -> pedidoEntregue(), 5, TimeUnit.SECONDS);
+        this.deliveryProducer = deliveryProducer;
     }
 
     public synchronized void receberPedidoPronto(Pedido p) {
-        filaEntrega.add(p);
-        if (emTransporte == null) {
-            colocaEmTransporte(filaEntrega.poll());
+        // Atualiza status localmente para PRONTO (já deve vir como PRONTO da cozinha, mas garante)
+        // Na verdade a cozinha já setou PRONTO.
+        // O próximo status TRANSPORTE será atualizado via callback do microsserviço.
+        
+        List<String> nomesItens = new ArrayList<>();
+        for (ItemPedido item : p.getItens()) {
+            nomesItens.add(item.getItem().getDescricao() + " (x" + item.getQuantidade() + ")");
         }
-    }
-
-    public synchronized void pedidoEntregue() {
-        emTransporte.setStatus(Pedido.Status.ENTREGUE);
-        pedidoRepository.salva(emTransporte);
-        emTransporte = null;
-        // Se tem pedidos na fila, programa o transporte para daqui a 1 segundo
-        if (!filaEntrega.isEmpty()){
-            Pedido prox = filaEntrega.poll();
-            scheduler.schedule(() -> colocaEmTransporte(prox), 1, TimeUnit.SECONDS);
-        }
+        
+        deliveryProducer.enviarPedidoParaEntrega(
+            p.getId(), 
+            p.getCliente().getNome(), 
+            p.getEnderecoEntrega(), 
+            nomesItens, 
+            p.getValorCobrado()
+        );
     }
 }

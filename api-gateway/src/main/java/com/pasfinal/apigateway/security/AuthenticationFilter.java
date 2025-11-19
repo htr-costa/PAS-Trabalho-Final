@@ -32,7 +32,11 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
     private static final List<String> PUBLIC_ENDPOINTS = List.of(
         "/auth/login",
         "/auth/register",
-        "/h2-console"  // Console do H2 para desenvolvimento
+        "/auth/validate",
+        "/auth/internal-register",
+        "/cardapio",          // Consultar cardápio é público
+        "/h2-console",        // Console do H2 para desenvolvimento
+        "/actuator"           // Endpoints de monitoramento
     );
 
     public AuthenticationFilter(JwtUtil jwtUtil) {
