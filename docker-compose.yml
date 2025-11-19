@@ -1,7 +1,24 @@
-version: "3.8"
-
 services:
-  # Microserviço de Estoque
+  naming-server:
+    build: naming-server
+    image: nameserver
+    ports:
+      - "8761:8761"
+    networks:
+      - microservices-network
+  
+  api-gateway:
+    build: api-gateway
+    image: gateway
+    ports:
+      - "8765:8765"
+    networks:
+      - microservices-network
+    depends_on:
+      - naming-server
+    environment:
+      - eureka.client.serviceUrl.defaultZone=http://naming-server:8761/eureka
+  
   estoque-service:
     build:
       context: .
@@ -13,31 +30,27 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
       - SPRING_DATASOURCE_URL=jdbc:h2:mem:estoquedb
     networks:
-      - telepizza-network
+      - microservices-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8081/api/estoque"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 20s
-
-  # Serviço Principal
-  main-service:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: telepizza-main
+  
+  telepizza:
+    build: telepizza
+    image: telepizza
     ports:
       - "8080:8080"
-    environment:
-      - SPRING_PROFILES_ACTIVE=prod
-      - SPRING_DATASOURCE_URL=jdbc:h2:mem:pizzadb
-      - ESTOQUE_MICROSERVICE_URL=http://estoque-service:8081
-    depends_on:
-      estoque-service:
-        condition: service_healthy
     networks:
-      - telepizza-network
+      - microservices-network
+    depends_on:
+      - naming-server
+      - estoque-service
+    environment:
+      - eureka.client.serviceUrl.defaultZone=http://naming-server:8761/eureka
+      - ESTOQUE_MICROSERVICE_URL=http://estoque-service:8081
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/"]
       interval: 10s
@@ -46,5 +59,4 @@ services:
       start_period: 20s
 
 networks:
-  telepizza-network:
-    driver: bridge
+  microservices-network:
