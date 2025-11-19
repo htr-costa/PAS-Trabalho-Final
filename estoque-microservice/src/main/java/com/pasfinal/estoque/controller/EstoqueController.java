@@ -70,6 +70,16 @@ public class EstoqueController {
     }
 
     /**
+     * Verifica disponibilidade de múltiplos ingredientes de uma vez
+     * POST /api/estoque/verificar-disponibilidade-lote
+     */
+    @PostMapping("/verificar-disponibilidade-lote")
+    public ResponseEntity<?> verificarDisponibilidadeLote(
+            @RequestBody com.pasfinal.estoque.dto.VerificarDisponibilidadeLoteRequest request) {
+        return ResponseEntity.ok(estoqueService.verificarDisponibilidadeLote(request));
+    }
+
+    /**
      * Dá baixa no estoque (remove quantidade)
      * POST /api/estoque/baixar
      */

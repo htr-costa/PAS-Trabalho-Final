@@ -9,7 +9,9 @@ import org.springframework.stereotype.Component;
 import com.pasfinal.Aplicacao.Requests.ItemPedidoRequest;
 import com.pasfinal.Aplicacao.Requests.SubmeterPedidoRequest;
 import com.pasfinal.Aplicacao.Responses.SubmeterPedidoResponse;
-import com.pasfinal.Adaptadores.Servicos.EstoqueMicroserviceClient;
+import com.pasfinal.Adaptadores.Servicos.EstoqueFeignClient;
+import com.pasfinal.Adaptadores.Servicos.VerificarDisponibilidadeRequest;
+import com.pasfinal.Adaptadores.Servicos.AtualizarEstoqueRequest;
 import com.pasfinal.Dominio.Dados.ClienteRepository;
 import com.pasfinal.Dominio.Dados.PedidoRepository;
 import com.pasfinal.Dominio.Dados.ProdutosRepository;
@@ -24,24 +26,22 @@ import com.pasfinal.Dominio.Servicos.ImpostosService;
 @Component
 public class SubmeterPedidoUC {
     private final ProdutosRepository produtosRepo;
-    private final EstoqueRepository estoqueRepo;
     private final PedidoRepository pedidoRepo;
     private final ClienteRepository clienteRepo;
     private final ImpostosService impostosService;
     private final DescontosService descontosService;
-    private final EstoqueMicroserviceClient estoqueMicroserviceClient;
+    private final EstoqueFeignClient estoqueFeignClient;
 
-    public SubmeterPedidoUC(ProdutosRepository produtosRepo, EstoqueRepository estoqueRepo, 
+    public SubmeterPedidoUC(ProdutosRepository produtosRepo, 
             PedidoRepository pedidoRepo, ClienteRepository clienteRepo,
             ImpostosService impostosService, DescontosService descontosService,
-            EstoqueMicroserviceClient estoqueMicroserviceClient) {
+            EstoqueFeignClient estoqueFeignClient) {
         this.produtosRepo = produtosRepo;
-        this.estoqueRepo = estoqueRepo;
         this.pedidoRepo = pedidoRepo;
         this.clienteRepo = clienteRepo;
         this.impostosService = impostosService;
         this.descontosService = descontosService;
-        this.estoqueMicroserviceClient = estoqueMicroserviceClient;
+        this.estoqueFeignClient = estoqueFeignClient;
     }
 
     public SubmeterPedidoResponse run(SubmeterPedidoRequest req, String emailUsuario) {
@@ -75,15 +75,20 @@ public class SubmeterPedidoUC {
                 continue;
             }
 
+            // Verifica disponibilidade no microserviço de estoque usando Feign
             boolean disponivel = true;
-
             for (var ing : p.getReceita().getIngredientes()) {
-                int estoque = estoqueRepo.recuperaQuantidade(ing.getId());
-                if (estoque < ipr.getQuantidade()) {
+                VerificarDisponibilidadeRequest request = new VerificarDisponibilidadeRequest(
+                    ing.getId(), 
+                    ipr.getQuantidade()
+                );
+                var response = estoqueFeignClient.verificarDisponibilidade(request);
+                if (response == null || !response.getOrDefault("disponivel", false)) {
                     disponivel = false;
                     break;
                 }
             }
+            
             if (!disponivel) {
                 itensIndisponiveis.add(p.getId());
                 continue;
@@ -100,10 +105,11 @@ public class SubmeterPedidoUC {
         try {
             for (ItemPedido item : itens) {
                 for (var ingrediente : item.getItem().getReceita().getIngredientes()) {
-                    estoqueMicroserviceClient.baixarEstoque(
+                    AtualizarEstoqueRequest request = new AtualizarEstoqueRequest(
                         ingrediente.getId(), 
                         item.getQuantidade()
                     );
+                    estoqueFeignClient.baixarEstoque(request);
                 }
             }
         } catch (Exception e) {

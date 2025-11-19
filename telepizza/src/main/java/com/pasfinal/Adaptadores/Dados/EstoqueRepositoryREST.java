@@ -1,6 +1,6 @@
 package com.pasfinal.Adaptadores.Dados;
 
-import com.pasfinal.Adaptadores.Servicos.EstoqueMicroserviceClient;
+import com.pasfinal.Adaptadores.Servicos.EstoqueFeignClient;
 import com.pasfinal.Adaptadores.Servicos.ItemEstoqueDTO;
 import com.pasfinal.Dominio.Dados.EstoqueRepository;
 import org.springframework.context.annotation.Primary;
@@ -14,9 +14,9 @@ import org.springframework.stereotype.Repository;
 @Primary
 public class EstoqueRepositoryREST implements EstoqueRepository {
     
-    private final EstoqueMicroserviceClient estoqueClient;
+    private final EstoqueFeignClient estoqueClient;
 
-    public EstoqueRepositoryREST(EstoqueMicroserviceClient estoqueClient) {
+    public EstoqueRepositoryREST(EstoqueFeignClient estoqueClient) {
         this.estoqueClient = estoqueClient;
     }
 

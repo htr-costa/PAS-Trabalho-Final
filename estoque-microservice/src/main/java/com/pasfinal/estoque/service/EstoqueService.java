@@ -8,6 +8,7 @@ import com.pasfinal.estoque.repository.ItemEstoqueRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -101,6 +102,22 @@ public class EstoqueService {
 
         ItemEstoque itemSalvo = itemEstoqueRepository.save(item);
         return converterParaDTO(itemSalvo);
+    }
+
+    public com.pasfinal.estoque.dto.VerificarDisponibilidadeLoteResponse verificarDisponibilidadeLote(
+            com.pasfinal.estoque.dto.VerificarDisponibilidadeLoteRequest request) {
+        List<Long> indisponiveis = new ArrayList<>();
+        
+        for (var item : request.getItens()) {
+            if (!verificarDisponibilidade(item.getIngredienteId(), item.getQuantidadeNecessaria())) {
+                indisponiveis.add(item.getIngredienteId());
+            }
+        }
+        
+        return new com.pasfinal.estoque.dto.VerificarDisponibilidadeLoteResponse(
+            indisponiveis.isEmpty(), 
+            indisponiveis
+        );
     }
 
     private ItemEstoqueDTO converterParaDTO(ItemEstoque item) {
