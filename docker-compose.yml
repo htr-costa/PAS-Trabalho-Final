@@ -1,0 +1,50 @@
+version: "3.8"
+
+services:
+  # Microserviço de Estoque
+  estoque-service:
+    build:
+      context: .
+      dockerfile: estoque-microservice/Dockerfile
+    container_name: telepizza-estoque
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:h2:mem:estoquedb
+    networks:
+      - telepizza-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/api/estoque"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # Serviço Principal
+  main-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: telepizza-main
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:h2:mem:pizzadb
+      - ESTOQUE_MICROSERVICE_URL=http://estoque-service:8081
+    depends_on:
+      estoque-service:
+        condition: service_healthy
+    networks:
+      - telepizza-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+networks:
+  telepizza-network:
+    driver: bridge
